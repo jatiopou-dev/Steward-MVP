@@ -28,7 +28,19 @@ CREATE TABLE public.profiles (
     org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
     full_name TEXT,
     role TEXT DEFAULT 'treasurer', -- 'treasurer', 'pastor', 'admin'
+    is_gift_aid_eligible BOOLEAN DEFAULT FALSE,
+    address_line_1 TEXT,
+    postcode TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Note: Transactions, Funds, and Budget schemas will be added in the next sprint.
+-- 4. Transactions table (Tracks income, expenditure, and Gift Aid claims)
+CREATE TABLE public.transactions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+    profile_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    amount_pence INTEGER NOT NULL,
+    date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    is_gift_aid_claimed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

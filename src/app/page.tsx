@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CheckoutButton from "@/components/CheckoutButton";
 
 export default function LandingPage() {
   return (
@@ -212,7 +213,7 @@ export default function LandingPage() {
                 <li>AI categorisation</li>
                 <li>Standard reports</li>
               </ul>
-              <Link href="/auth" className="btn btn-outline" style={{ display: "block", textAlign: "center", width: "100%" }}>Get started</Link>
+              <CheckoutButton plan="Seed" amount={29} className="btn btn-outline">Get started</CheckoutButton>
             </div>
             <div className="price-card featured">
               <div className="price-name">Church</div>
@@ -224,7 +225,7 @@ export default function LandingPage() {
                 <li>AI assistant + chat</li>
                 <li>AI report writer</li>
               </ul>
-              <Link href="/auth" className="btn btn-gold" style={{ display: "block", textAlign: "center", width: "100%" }}>Get started</Link>
+              <CheckoutButton plan="Church" amount={69} className="btn btn-gold">Get started</CheckoutButton>
             </div>
             <div className="price-card">
               <div className="price-name">Network</div>
@@ -236,7 +237,7 @@ export default function LandingPage() {
                 <li>Consolidated reporting</li>
                 <li>Remittance tracking</li>
               </ul>
-              <Link href="/auth" className="btn btn-outline" style={{ display: "block", textAlign: "center", width: "100%" }}>Get started</Link>
+              <CheckoutButton plan="Network" amount={199} className="btn btn-outline">Get started</CheckoutButton>
             </div>
           </div>
         </div>
