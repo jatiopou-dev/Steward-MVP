@@ -1,18 +1,56 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Topbar from "@/components/dashboard/Topbar";
 import { useDenomination } from "@/contexts/DenominationContext";
-import { useChat } from "@ai-sdk/react";
 
 export default function AIPage() {
   const { terms } = useDenomination();
-  
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: "/api/chat",
-    body: {
-      denominationData: terms
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<{id: string, role: string, content: string}[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    const newMessages = [...messages, { id: Date.now().toString(), role: "user", content: input }];
+    setMessages(newMessages);
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: newMessages, denominationData: terms })
+      });
+
+      if (!res.body) throw new Error("No response body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantMsg = "";
+      
+      setMessages((prev) => [...prev, { id: Date.now().toString() + "-ai", role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        assistantMsg += chunk;
+        
+        setMessages((prev) => [
+          ...prev.slice(0, -1),
+          { id: prev[prev.length - 1].id, role: "assistant", content: assistantMsg }
+        ]);
+      }
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-  });
+  };
 
   return (
     <>
@@ -70,12 +108,12 @@ export default function AIPage() {
             </div>
 
             <div className="ai-prompt">
-              <form onSubmit={handleSubmit} style={{ display: "flex", width: "100%", gap: ".5rem" }}>
+              <form onSubmit={onSubmit} style={{ display: "flex", width: "100%", gap: ".5rem" }}>
                 <input 
                   className="ai-inp" 
                   type="text" 
                   value={input}
-                  onChange={handleInputChange}
+                  onChange={(e) => setInput(e.target.value)}
                   placeholder="Ask about your finances..."
                   style={{ flex: 1 }}
                 />
