@@ -23,5 +23,5 @@ Answer questions based on general church finance principles, but acknowledge tha
     system: systemPrompt,
   });
 
-  return result.toDataStreamResponse();
+  return result.toTextStreamResponse();
 }
