@@ -42,7 +42,7 @@ export default function LandingPage() {
             <Link href="/auth" className="btn btn-forest btn-lg">
               Start free trial
             </Link>
-            <Link href="/auth" className="btn btn-outline btn-lg">
+            <Link href="/demo" className="btn btn-outline btn-lg">
               View live demo
             </Link>
           </div>
