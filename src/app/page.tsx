@@ -16,7 +16,7 @@ export default function LandingPage() {
           <a href="#features">Features</a>
           <a href="#denominations">Denominations</a>
           <a href="#pricing">Pricing</a>
-          <a href="#pricing">vs Legacy Systems</a>
+          <a href="#compare">vs Legacy Systems</a>
           <Link href="/auth" className="btn btn-outline btn-sm">
             Sign in
           </Link>
@@ -193,6 +193,59 @@ export default function LandingPage() {
               <div className="denom-desc">{denom.desc}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ===== VS LEGACY SYSTEMS ===== */}
+      <section id="compare" className="section" style={{ background: "var(--parchment)" }}>
+        <div className="section-max">
+          <div className="eyebrow">Why switch?</div>
+          <h2 className="section-title">Steward vs Legacy Systems</h2>
+          <p className="section-sub">
+            ACMS is locked to a single denomination. ChurchPal 4 is a desktop app from another era. Steward was built for the modern UK church — cloud-first, AI-powered, and denomination-agnostic.
+          </p>
+
+          <div style={{ overflowX: "auto", marginTop: "2.5rem" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.95rem" }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "left", padding: "1rem 1.25rem", background: "var(--forest)", color: "#fff", borderRadius: "12px 0 0 0", fontWeight: 600 }}>Feature</th>
+                  <th style={{ textAlign: "center", padding: "1rem 1.25rem", background: "var(--forest)", color: "var(--gold2)", fontWeight: 700, fontSize: "1rem" }}>Steward ✦</th>
+                  <th style={{ textAlign: "center", padding: "1rem 1.25rem", background: "#6b7280", color: "#fff", fontWeight: 600 }}>ACMS</th>
+                  <th style={{ textAlign: "center", padding: "1rem 1.25rem", background: "#6b7280", color: "#fff", fontWeight: 600, borderRadius: "0 12px 0 0" }}>ChurchPal 4</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["Cloud-based (no install)", "✅", "⚠️ Web but Adventist-only", "❌ Desktop only"],
+                  ["Works on mobile & offline", "✅ Full PWA", "⚠️ Partial (7me app)", "❌ No"],
+                  ["AI bank reconciliation", "✅ Claude AI", "❌ None", "❌ None"],
+                  ["AI report writer", "✅ Natural language", "❌ None", "❌ None"],
+                  ["HMRC Gift Aid automation", "✅ Built-in", "❌ Not supported", "⚠️ Manual claim only"],
+                  ["Multi-denomination support", "✅ 40+ denominations", "❌ Adventist only", "⚠️ Generic, no terminology"],
+                  ["Denomination terminology engine", "✅ Fully adaptive", "❌ Fixed terminology", "❌ None"],
+                  ["Fund accounting", "✅ Restricted/unrestricted", "⚠️ Basic", "✅ Yes (desktop)"],
+                  ["Membership management", "✅ Full + transfers", "✅ Yes", "⚠️ Basic"],
+                  ["Multi-church / network oversight", "✅ Diocese / circuit ready", "✅ Conference level", "❌ Single church only"],
+                  ["Stripe payment integration", "✅ Built-in", "❌ None", "❌ None"],
+                  ["End-of-year PDF statements", "✅ One-click", "❌ None", "⚠️ Manual export"],
+                  ["Pricing (typical church)", "From £29/mo", "Free (Adventist only)", "~£150 licence (one-off)"],
+                  ["Data sovereignty / GDPR", "✅ UK-compliant", "⚠️ Adventist servers", "⚠️ Local only, no audit"],
+                ].map(([feat, steward, acms, churchpal], i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "var(--cream)" }}>
+                    <td style={{ padding: "0.85rem 1.25rem", fontWeight: 500, color: "var(--ink)" }}>{feat}</td>
+                    <td style={{ padding: "0.85rem 1.25rem", textAlign: "center", background: "rgba(74,111,84,0.07)", fontWeight: 600, color: "var(--forest)" }}>{steward}</td>
+                    <td style={{ padding: "0.85rem 1.25rem", textAlign: "center", color: "#374151" }}>{acms}</td>
+                    <td style={{ padding: "0.85rem 1.25rem", textAlign: "center", color: "#374151" }}>{churchpal}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ marginTop: "2rem", padding: "1.25rem 1.5rem", background: "rgba(74,111,84,0.08)", borderRadius: "10px", borderLeft: "4px solid var(--forest)", fontSize: "0.88rem", color: "#374151" }}>
+            ⚠️ <strong>Disclaimer:</strong> Comparison is based on publicly available feature information at time of writing (April 2026). ACMS availability is limited to Seventh-day Adventist churches via their conference structure. ChurchPal 4 refers to the desktop accounting application.
+          </div>
         </div>
       </section>
 
