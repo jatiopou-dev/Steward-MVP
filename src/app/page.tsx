@@ -1,5 +1,4 @@
 import Link from "next/link";
-import CheckoutButton from "@/components/CheckoutButton";
 
 export default function LandingPage() {
   return (
@@ -14,10 +13,10 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="nav-links">
-          <Link href="#">Features</Link>
-          <Link href="#">Denominations</Link>
-          <Link href="#">Pricing</Link>
-          <Link href="#">vs Legacy Systems</Link>
+          <a href="#features">Features</a>
+          <a href="#denominations">Denominations</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#pricing">vs Legacy Systems</a>
           <Link href="/auth" className="btn btn-outline btn-sm">
             Sign in
           </Link>
@@ -43,7 +42,7 @@ export default function LandingPage() {
             <Link href="/auth" className="btn btn-forest btn-lg">
               Start free trial
             </Link>
-            <Link href="/dashboard" className="btn btn-outline btn-lg">
+            <Link href="/auth" className="btn btn-outline btn-lg">
               View live demo
             </Link>
           </div>
@@ -123,7 +122,7 @@ export default function LandingPage() {
         <div className="trust-item">🔒 GDPR compliant</div>
       </div>
 
-      <section className="section" style={{ background: "var(--parchment)" }}>
+      <section id="features" className="section" style={{ background: "var(--parchment)" }}>
         <div className="section-max">
           <div className="eyebrow">Full feature suite</div>
           <h2 className="section-title">Everything your treasurer needs</h2>
@@ -163,7 +162,7 @@ export default function LandingPage() {
             </div>
             <div className="feat-card">
               <div className="feat-icon" style={{ background: "var(--rust-bg)" }}>📱</div>
-              <h3>Mobile & offline</h3>
+              <h3>Mobile &amp; offline</h3>
               <p>Full PWA — record offerings, add transactions, and manage accounts even without wifi.</p>
               <div className="feat-badge" style={{ background: "var(--rust-bg)", color: "var(--rust)" }}>Offline-first</div>
             </div>
@@ -171,7 +170,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="denom-section">
+      <section id="denominations" className="denom-section">
         <div className="eyebrow" style={{ color: "var(--gold2)" }}>Built for every tradition</div>
         <h2 className="section-title" style={{ color: "var(--cream)" }}>Your denomination, your language</h2>
         <p className="section-sub" style={{ color: "rgba(255,255,255,.55)" }}>
@@ -197,7 +196,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="section" style={{ background: "var(--cream)" }}>
+      <section id="pricing" className="section" style={{ background: "var(--cream)" }}>
         <div className="section-max">
           <div className="eyebrow">Pricing</div>
           <h2 className="section-title">Simple, honest pricing</h2>
@@ -213,7 +212,9 @@ export default function LandingPage() {
                 <li>AI categorisation</li>
                 <li>Standard reports</li>
               </ul>
-              <CheckoutButton plan="Seed" amount={29} className="btn btn-outline">Get started</CheckoutButton>
+              <Link href="/auth?plan=Seed&amount=29" className="btn btn-outline" style={{ display: "block", textAlign: "center" }}>
+                Get started
+              </Link>
             </div>
             <div className="price-card featured">
               <div className="price-name">Church</div>
@@ -225,7 +226,9 @@ export default function LandingPage() {
                 <li>AI assistant + chat</li>
                 <li>AI report writer</li>
               </ul>
-              <CheckoutButton plan="Church" amount={69} className="btn btn-gold">Get started</CheckoutButton>
+              <Link href="/auth?plan=Church&amount=69" className="btn btn-gold" style={{ display: "block", textAlign: "center" }}>
+                Get started
+              </Link>
             </div>
             <div className="price-card">
               <div className="price-name">Network</div>
@@ -237,7 +240,9 @@ export default function LandingPage() {
                 <li>Consolidated reporting</li>
                 <li>Remittance tracking</li>
               </ul>
-              <CheckoutButton plan="Network" amount={199} className="btn btn-outline">Get started</CheckoutButton>
+              <Link href="/auth?plan=Network&amount=199" className="btn btn-outline" style={{ display: "block", textAlign: "center" }}>
+                Get started
+              </Link>
             </div>
           </div>
         </div>
