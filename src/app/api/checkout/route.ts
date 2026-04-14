@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { createClient } from '@/utils/supabase/server';
 
 // Initialize Stripe gracefully, checking if the secret key exists in the environment
 const stripeSecret = process.env.STRIPE_SECRET_KEY;
@@ -8,6 +9,17 @@ const stripe = stripeSecret ? new Stripe(stripeSecret) : null;
 export async function POST(req: Request) {
   if (!stripe) {
     return NextResponse.json({ error: "Missing STRIPE_SECRET_KEY in environment" }, { status: 500 });
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  let org_id = '';
+  
+  if (user) {
+    const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single();
+    if (profile?.org_id) {
+      org_id = profile.org_id;
+    }
   }
 
   try {
@@ -30,6 +42,9 @@ export async function POST(req: Request) {
       mode: 'payment',
       success_url: `${req.headers.get("origin")}/dashboard?success=true`,
       cancel_url: `${req.headers.get("origin")}/auth?canceled=true`,
+      metadata: {
+        org_id: org_id
+      }
     });
 
     return NextResponse.json({ id: session.id, url: session.url });

@@ -2,6 +2,7 @@
 import React from "react";
 import Topbar from "@/components/dashboard/Topbar";
 import { useDenomination, Denomination } from "@/contexts/DenominationContext";
+import CheckoutButton from "@/components/CheckoutButton";
 
 export default function SettingsPage() {
   const { denomination, setDenomination, terms } = useDenomination();
@@ -73,6 +74,18 @@ export default function SettingsPage() {
             </div>
             <strong>{terms.tier}</strong>
           </div>
+        </div>
+
+        <div className="card" style={{ maxWidth: 640, marginTop: "2rem" }}>
+          <div className="card-head">
+            <div className="card-title">Billing & Upgrades</div>
+          </div>
+          <p className="card-sub" style={{ marginBottom: "1.5rem" }}>
+            Upgrade your organization to the Premium Network tier to unlock bulk SMS features and advanced HMRC automated pipelines.
+          </p>
+          <CheckoutButton plan="premium" amount={49} className="btn btn-forest">
+            Upgrade to Premium (£49/mo)
+          </CheckoutButton>
         </div>
       </div>
     </>

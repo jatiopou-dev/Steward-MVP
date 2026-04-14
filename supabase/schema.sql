@@ -44,3 +44,85 @@ CREATE TABLE public.transactions (
     is_gift_aid_claimed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- ==========================================
+-- Phase 2: Auth Triggers for User Sync
+-- ==========================================
+
+-- Function to handle new user registration from Supabase Auth
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, role)
+  VALUES (
+    NEW.id,
+    NEW.raw_user_meta_data->>'full_name',
+    'treasurer' -- default role
+  );
+  RETURN NEW;
+END;
+$$;
+
+-- Trigger the function on new user signup
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ==========================================
+-- Phase 3: Row Level Security (RLS)
+-- ==========================================
+
+-- Enable RLS
+ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.denomination_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+
+-- Profiles: Users can read/edit their own profile
+CREATE POLICY "Users can view own profile" 
+ON public.profiles FOR SELECT 
+USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile" 
+ON public.profiles FOR UPDATE 
+USING (auth.uid() = id);
+
+-- Organizations: users can view their own organization
+CREATE POLICY "Users can view their organization" 
+ON public.organizations FOR SELECT 
+USING (id IN (
+  SELECT org_id FROM public.profiles WHERE id = auth.uid()
+));
+
+-- Denomination Config: users can view their organization's config
+CREATE POLICY "Users can view their org's denomination config" 
+ON public.denomination_config FOR SELECT 
+USING (org_id IN (
+  SELECT org_id FROM public.profiles WHERE id = auth.uid()
+));
+
+-- Transactions: users can view/insert/update transactions in their org
+CREATE POLICY "Users can view their org's transactions" 
+ON public.transactions FOR SELECT 
+USING (org_id IN (
+  SELECT org_id FROM public.profiles WHERE id = auth.uid()
+));
+
+CREATE POLICY "Users can insert their org's transactions" 
+ON public.transactions FOR INSERT 
+WITH CHECK (org_id IN (
+  SELECT org_id FROM public.profiles WHERE id = auth.uid()
+));
+
+CREATE POLICY "Users can update their org's transactions" 
+ON public.transactions FOR UPDATE 
+USING (org_id IN (
+  SELECT org_id FROM public.profiles WHERE id = auth.uid()
+))
+WITH CHECK (org_id IN (
+  SELECT org_id FROM public.profiles WHERE id = auth.uid()
+));
