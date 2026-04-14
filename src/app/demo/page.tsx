@@ -1,13 +1,15 @@
 "use client";
 import React from "react";
 import Topbar from "@/components/dashboard/Topbar";
+import { useDenomination } from "@/contexts/DenominationContext";
 
 export default function DemoOverview() {
+  const { terms } = useDenomination();
   return (
     <>
       <Topbar
         title="Good morning 👋"
-        subtitle="Grace Baptist Church · April 2026"
+        subtitle={`Grace ${terms.label} Church · April 2026`}
         actions={
           <>
             <button className="btn btn-outline btn-sm">Generate report</button>
@@ -34,7 +36,7 @@ export default function DemoOverview() {
             <div className="kpi-meta up">↑ 22% vs Apr 2025</div>
           </div>
           <div className="kpi">
-            <div className="kpi-lbl">Covenanted Giving</div>
+            <div className="kpi-lbl">{terms.giving}</div>
             <div className="kpi-val">£4,800</div>
             <div className="kpi-meta neutral">48 active givers</div>
           </div>
@@ -54,8 +56,8 @@ export default function DemoOverview() {
                 { ico: "inc", emoji: "🎁", name: "Sunday offering — 27 Apr", meta: "General Fund", amt: "+£3,840", chip: "Auto", chipCls: "chip-sage" },
                 { ico: "res", emoji: "💰", name: "National Lottery Grant", meta: "Restricted · Community outreach", amt: "+£5,000", chip: "Restricted", chipCls: "chip-gold" },
                 { ico: "exp", emoji: "🏢", name: "Building maintenance", meta: "Facilities · April invoice", amt: "-£1,200", chip: "", chipCls: "" },
-                { ico: "inc", emoji: "🎁", name: "Covenanted giving — April", meta: "Standing orders · 48 givers", amt: "+£4,800", chip: "Auto", chipCls: "chip-sage" },
-                { ico: "exp", emoji: "💼", name: "Pastor payroll — April", meta: "Salaries · 2 employees", amt: "-£5,400", chip: "", chipCls: "" },
+                { ico: "inc", emoji: "🎁", name: `${terms.giving} — April`, meta: "Standing orders · 48 givers", amt: "+£4,800", chip: "Auto", chipCls: "chip-sage" },
+                { ico: "exp", emoji: "💼", name: `${terms.minister} payroll — April`, meta: "Salaries · 2 employees", amt: "-£5,400", chip: "", chipCls: "" },
               ].map((tx, i) => (
                 <div className="tx" key={i}>
                   <div className={`tx-ico ${tx.ico}`}>{tx.emoji}</div>

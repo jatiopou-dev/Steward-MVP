@@ -2,11 +2,13 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useDenomination } from "@/contexts/DenominationContext";
 
 type NavLink = { type?: "header"; href?: string; icon?: string; label: string };
 
 export default function DemoSidebar() {
   const pathname = usePathname();
+  const { terms } = useDenomination();
 
   const navLinks: NavLink[] = [
     { href: "/demo", icon: "📊", label: "Overview" },
@@ -15,7 +17,7 @@ export default function DemoSidebar() {
     { href: "/demo/funds", icon: "📂", label: "Fund accounts" },
     { href: "/demo/budget", icon: "📈", label: "Budget" },
     { href: "/demo/payroll", icon: "💼", label: "Payroll" },
-    { href: "/demo/giving", icon: "🎁", label: "Planned Giving" },
+    { href: "/demo/giving", icon: "🎁", label: terms.giving },
     { type: "header", label: "Church" },
     { href: "/demo/members", icon: "👥", label: "Membership" },
     { href: "/demo/ai", icon: "🧠", label: "AI assistant" },
@@ -37,9 +39,9 @@ export default function DemoSidebar() {
         </div>
       </div>
       <div className="sidebar-org">
-        <strong>Grace Baptist Church</strong>
-        <small>Baptist · London Region</small>
-        <div className="denom-tag">🕊️ Baptist</div>
+        <strong>Grace {terms.label} Church</strong>
+        <small>{terms.label} · London Region</small>
+        <div className="denom-tag">{terms.icon} {terms.label}</div>
       </div>
 
       {navLinks.map((link, idx) => {
