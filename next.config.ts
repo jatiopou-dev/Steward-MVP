@@ -7,7 +7,7 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: ['@react-pdf/renderer'],
 };
 
 export default withSerwist(nextConfig);
