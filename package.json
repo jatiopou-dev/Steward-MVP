@@ -11,12 +11,14 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.68",
     "@ai-sdk/react": "^3.0.156",
+    "@react-pdf/renderer": "^4.4.1",
     "@serwist/next": "^9.5.7",
     "@stripe/stripe-js": "^9.1.0",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.102.1",
     "ai": "^6.0.154",
     "next": "16.2.3",
+    "papaparse": "^5.5.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "serwist": "^9.5.7",
@@ -25,6 +27,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Link from "next/link";
 import Topbar from "@/components/dashboard/Topbar";
 
 export default function TransactionsPage() {
@@ -10,7 +11,7 @@ export default function TransactionsPage() {
         subtitle="All income and expenditure · AI-categorised"
         actions={
           <>
-            <button className="btn btn-outline btn-sm">⬇ Import CSV</button>
+            <Link href="/dashboard/transactions/import" className="btn btn-outline btn-sm">⬇ Import CSV</Link>
             <button className="btn btn-forest btn-sm">+ Add</button>
           </>
         }

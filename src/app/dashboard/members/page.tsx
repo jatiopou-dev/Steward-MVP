@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import Topbar from "@/components/dashboard/Topbar";
+import GenerateStatementButton from "@/components/dashboard/GenerateStatementButton";
 
 export default function MembersPage() {
   return (
@@ -25,12 +26,12 @@ export default function MembersPage() {
         <div className="card">
           <div className="card-head"><div className="card-title">Member directory</div><div className="card-link">Export →</div></div>
           <table className="tbl">
-            <thead><tr><th>Name</th><th>Status</th><th>Since</th><th>Giving (YTD)</th><th>Gift Aid</th></tr></thead>
+            <thead><tr><th>Name</th><th>Status</th><th>Since</th><th>Giving (YTD)</th><th>Gift Aid</th><th>Actions</th></tr></thead>
             <tbody>
-              <tr><td><div style={{display:"flex",alignItems:"center",gap:".6rem"}}><div className="avatar" style={{background:"var(--sage-bg)",color:"var(--sage)"}}>SA</div>Sarah Anderson</div></td><td><div className="chip chip-sage">Active</div></td><td>2014</td><td>£2,400</td><td><div className="chip chip-sage">Eligible</div></td></tr>
-              <tr><td><div style={{display:"flex",alignItems:"center",gap:".6rem"}}><div className="avatar" style={{background:"var(--gold-bg)",color:"var(--gold)"}}>JO</div>James Okafor</div></td><td><div className="chip chip-sage">Active</div></td><td>2019</td><td>£1,800</td><td><div className="chip chip-stone">Not declared</div></td></tr>
-              <tr><td><div style={{display:"flex",alignItems:"center",gap:".6rem"}}><div className="avatar" style={{background:"var(--rust-bg)",color:"var(--rust)"}}>PM</div>Patricia Moore</div></td><td><div className="chip chip-sage">Active</div></td><td>2021</td><td>£1,800</td><td><div className="chip chip-sage">Eligible</div></td></tr>
-              <tr><td><div style={{display:"flex",alignItems:"center",gap:".6rem"}}><div className="avatar" style={{background:"var(--sage-bg)",color:"var(--forest)"}}>DW</div>David Wilson</div></td><td><div className="chip chip-gold">Transfer pending</div></td><td>2016</td><td>£640</td><td><div className="chip chip-sage">Eligible</div></td></tr>
+              <tr><td><div style={{display:"flex",alignItems:"center",gap:".6rem"}}><div className="avatar" style={{background:"var(--sage-bg)",color:"var(--sage)"}}>SA</div>Sarah Anderson</div></td><td><div className="chip chip-sage">Active</div></td><td>2014</td><td>£2,400</td><td><div className="chip chip-sage">Eligible</div></td><td><GenerateStatementButton donor={{name: "Sarah Anderson", address: "123 Grace Way, London, L1 2AB", amount: "£2,400"}} orgName="Grace Baptist Church" taxYear="2025/26" /></td></tr>
+              <tr><td><div style={{display:"flex",alignItems:"center",gap:".6rem"}}><div className="avatar" style={{background:"var(--gold-bg)",color:"var(--gold)"}}>JO</div>James Okafor</div></td><td><div className="chip chip-sage">Active</div></td><td>2019</td><td>£1,800</td><td><div className="chip chip-stone">Not declared</div></td><td><GenerateStatementButton donor={{name: "James Okafor", address: "45 Faith St, London, E2 4CD", amount: "£1,800"}} orgName="Grace Baptist Church" taxYear="2025/26" /></td></tr>
+              <tr><td><div style={{display:"flex",alignItems:"center",gap:".6rem"}}><div className="avatar" style={{background:"var(--rust-bg)",color:"var(--rust)"}}>PM</div>Patricia Moore</div></td><td><div className="chip chip-sage">Active</div></td><td>2021</td><td>£1,800</td><td><div className="chip chip-sage">Eligible</div></td><td><GenerateStatementButton donor={{name: "Patricia Moore", address: "89 Chapel Rd, London, N3 5EF", amount: "£1,800"}} orgName="Grace Baptist Church" taxYear="2025/26" /></td></tr>
+              <tr><td><div style={{display:"flex",alignItems:"center",gap:".6rem"}}><div className="avatar" style={{background:"var(--sage-bg)",color:"var(--forest)"}}>DW</div>David Wilson</div></td><td><div className="chip chip-gold">Transfer pending</div></td><td>2016</td><td>£640</td><td><div className="chip chip-sage">Eligible</div></td><td><GenerateStatementButton donor={{name: "David Wilson", address: "12 Hope Blvd, London, S4 6GH", amount: "£640"}} orgName="Grace Baptist Church" taxYear="2025/26" /></td></tr>
             </tbody>
           </table>
         </div>
