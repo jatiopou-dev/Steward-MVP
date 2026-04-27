@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { updateTransaction, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from "@/app/actions/transactions";
+import { updateTransaction } from "@/app/actions/transactions";
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from "@/utils/domainOptions";
 
 type Tx = {
   id: string;

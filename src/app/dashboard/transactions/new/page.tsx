@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Topbar from "@/components/dashboard/Topbar";
-import { createTransaction, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from "@/app/actions/transactions";
+import { createTransaction } from "@/app/actions/transactions";
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from "@/utils/domainOptions";
 
 export default function NewTransactionPage() {
   const [type, setType] = useState<"income" | "expense">("income");

@@ -148,12 +148,3 @@ export async function deleteMember(formData: FormData) {
   revalidatePath("/dashboard/members");
 }
 
-export const MEMBER_TITLES = ["Mr", "Mrs", "Ms", "Miss", "Dr", "Rev", "Prof"];
-
-export const MEMBER_STATUSES: { value: MemberStatus; label: string }[] = [
-  { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
-  { value: "transfer_in", label: "Transfer in" },
-  { value: "transfer_out", label: "Transfer out" },
-  { value: "deceased", label: "Deceased" },
-];

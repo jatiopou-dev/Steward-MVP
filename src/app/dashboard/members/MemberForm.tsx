@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { MEMBER_TITLES, MEMBER_STATUSES, type Member } from "@/app/actions/members";
+import { type Member } from "@/app/actions/members";
+import { MEMBER_TITLES, MEMBER_STATUSES } from "@/utils/domainOptions";
 
 type Props = {
   defaultValues?: Partial<Member>;

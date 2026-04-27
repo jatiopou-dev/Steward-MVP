@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Topbar from "@/components/dashboard/Topbar";
 import { createClient } from "@/utils/supabase/server";
-import { updateTransaction, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from "@/app/actions/transactions";
 import EditTransactionForm from "./EditTransactionForm";
 
 async function getTransaction(id: string) {

@@ -4,7 +4,6 @@ import Topbar from "@/components/dashboard/Topbar";
 import {
   createGivingRecord,
   getGivingMembers,
-  memberDisplayName,
 } from "@/app/actions/giving";
 
 const GIVING_CATEGORIES = [
@@ -14,6 +13,14 @@ const GIVING_CATEGORIES = [
   "Fundraising",
   "Other income",
 ];
+
+function memberDisplayName(member: {
+  title?: string | null;
+  first_name: string;
+  last_name: string;
+}) {
+  return [member.title, member.first_name, member.last_name].filter(Boolean).join(" ");
+}
 
 export default async function NewGivingPage() {
   const members = await getGivingMembers();

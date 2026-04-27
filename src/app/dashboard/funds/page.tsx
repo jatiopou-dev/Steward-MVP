@@ -1,7 +1,8 @@
 import React from "react";
 import Link from "next/link";
 import Topbar from "@/components/dashboard/Topbar";
-import { getFunds, deleteFund, FUND_TYPES, FUND_STATUSES, type Fund } from "@/app/actions/funds";
+import { getFunds, deleteFund, type Fund } from "@/app/actions/funds";
+import { FUND_TYPES, FUND_STATUSES } from "@/utils/domainOptions";
 
 function formatGBP(pence: number): string {
   return new Intl.NumberFormat("en-GB", {

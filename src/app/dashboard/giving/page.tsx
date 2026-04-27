@@ -6,7 +6,6 @@ import { termsMap, type Denomination } from "@/contexts/DenominationContext";
 import {
   getGiftAidExport,
   getGivingTransactions,
-  memberDisplayName,
 } from "@/app/actions/giving";
 
 function formatGBP(pence: number): string {
@@ -24,6 +23,15 @@ function formatDate(dateStr: string): string {
     month: "short",
     year: "numeric",
   });
+}
+
+function memberDisplayName(member: {
+  title?: string | null;
+  first_name: string;
+  last_name: string;
+} | null) {
+  if (!member) return "Anonymous / unlinked";
+  return [member.title, member.first_name, member.last_name].filter(Boolean).join(" ");
 }
 
 export default async function GivingPage() {

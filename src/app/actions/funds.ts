@@ -18,18 +18,6 @@ export type Fund = {
 export type FundType = "unrestricted" | "restricted" | "designated";
 export type FundStatus = "active" | "monitor" | "closed";
 
-export const FUND_TYPES: { value: FundType; label: string; chip: string }[] = [
-  { value: "unrestricted", label: "Unrestricted", chip: "chip-stone" },
-  { value: "designated",   label: "Designated",   chip: "chip-stone" },
-  { value: "restricted",   label: "Restricted",   chip: "chip-gold"  },
-];
-
-export const FUND_STATUSES: { value: FundStatus; label: string; chip: string }[] = [
-  { value: "active",  label: "Active",  chip: "chip-sage" },
-  { value: "monitor", label: "Monitor", chip: "chip-gold" },
-  { value: "closed",  label: "Closed",  chip: "chip-stone" },
-];
-
 export async function getFunds(): Promise<Fund[]> {
   const supabase = await createClient();
   const { data, error } = await supabase

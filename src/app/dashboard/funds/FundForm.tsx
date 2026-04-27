@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { FUND_TYPES, FUND_STATUSES, type Fund } from "@/app/actions/funds";
+import { type Fund } from "@/app/actions/funds";
+import { FUND_TYPES, FUND_STATUSES } from "@/utils/domainOptions";
 
 type Props = {
   defaultValues?: Partial<Fund>;

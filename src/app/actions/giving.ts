@@ -42,7 +42,7 @@ export type GivingTransaction = {
   } | null;
 };
 
-export function memberDisplayName(member: MemberName | null) {
+function memberDisplayName(member: MemberName | null) {
   if (!member) return "Anonymous / unlinked";
   return [member.title, member.first_name, member.last_name].filter(Boolean).join(" ");
 }

@@ -119,26 +119,3 @@ export async function deleteTransaction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-export const INCOME_CATEGORIES = [
-  "Regular giving",
-  "Tithe & offering",
-  "Special offering",
-  "Fundraising",
-  "Grant",
-  "Hall hire",
-  "Wedding / funeral fees",
-  "Other income",
-] as const;
-
-export const EXPENSE_CATEGORIES = [
-  "Payroll & wages",
-  "Building & facilities",
-  "Ministry & outreach",
-  "Administration",
-  "Worship & music",
-  "Utilities",
-  "Mission giving",
-  "Insurance",
-  "Community events",
-  "Other expense",
-] as const;
