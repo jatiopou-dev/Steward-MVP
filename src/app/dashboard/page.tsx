@@ -4,6 +4,8 @@ import Topbar from "@/components/dashboard/Topbar";
 import { createClient } from "@/utils/supabase/server";
 import { termsMap, type Denomination } from "@/contexts/DenominationContext";
 
+const FUND_BAR_COLOURS = ["var(--forest)", "var(--gold)", "var(--sage)", "var(--stone2)", "var(--rust)"];
+
 function formatGBP(pence: number): string {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
@@ -80,6 +82,17 @@ export default async function DashboardOverview() {
     .select("id, description, category, amount_pence, date")
     .order("date", { ascending: false })
     .limit(5);
+
+  // Funds
+  const { data: fundsData } = await supabase
+    .from("funds")
+    .select("id, name, balance_pence")
+    .eq("status", "active")
+    .order("balance_pence", { ascending: false })
+    .limit(5);
+
+  const funds = fundsData ?? [];
+  const totalFundsPence = funds.reduce((s, f) => s + f.balance_pence, 0);
 
   // Member stats
   const { data: memberStats } = await supabase
@@ -190,6 +203,46 @@ export default async function DashboardOverview() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+            {/* ── Fund allocation ── */}
+            <div className="card">
+              <div className="card-head">
+                <div className="card-title">Fund allocation</div>
+                <Link href="/dashboard/funds" className="card-link">Manage →</Link>
+              </div>
+              {funds.length === 0 ? (
+                <div style={{ padding: "1rem 0", textAlign: "center" }}>
+                  <p style={{ fontSize: ".78rem", color: "var(--stone2)", marginBottom: ".8rem" }}>
+                    No fund accounts set up yet.
+                  </p>
+                  <Link href="/dashboard/funds/new" className="btn btn-outline btn-sm">
+                    + Create fund
+                  </Link>
+                </div>
+              ) : (
+                <div className="fund-rows">
+                  {funds.map((fund, i) => {
+                    const pct = totalFundsPence > 0
+                      ? Math.round((fund.balance_pence / totalFundsPence) * 100)
+                      : 0;
+                    return (
+                      <div key={fund.id}>
+                        <div className="fund-head">
+                          <span className="fund-nm">{fund.name}</span>
+                          <span className="fund-vl">{pct}%</span>
+                        </div>
+                        <div className="fund-bar">
+                          <div
+                            className="fund-fill"
+                            style={{ width: `${pct}%`, background: FUND_BAR_COLOURS[i % FUND_BAR_COLOURS.length] }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* ── Quick stats ── */}
             <div className="card">
               <div className="card-head">
