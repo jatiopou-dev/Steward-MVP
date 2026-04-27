@@ -1,43 +1,140 @@
-"use server"
+"use server";
 
-import { createClient } from '@/utils/supabase/server';
-import { revalidatePath } from 'next/cache';
+import { createClient } from "@/utils/supabase/server";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
-export async function getTransactions() {
+export type Transaction = {
+  id: string;
+  description: string;
+  category: string | null;
+  notes: string | null;
+  amount_pence: number;
+  date: string;
+  is_gift_aid_claimed: boolean;
+  profile_id: string | null;
+  org_id: string;
+  created_at: string;
+};
+
+export async function getTransactions(): Promise<Transaction[]> {
   const supabase = await createClient();
-  
-  // RLS will automatically filter these down to the user's org_id
   const { data, error } = await supabase
-    .from('transactions')
-    .select('*, profiles(full_name)')
-    .order('date', { ascending: false });
+    .from("transactions")
+    .select("*")
+    .order("date", { ascending: false });
 
   if (error) {
-    console.error("Error fetching transactions:", error);
+    console.error("getTransactions error:", error);
     return [];
   }
-  return data;
+  return data ?? [];
 }
 
-export async function addTransaction(amountPence: number, profileId?: string) {
+export async function createTransaction(formData: FormData) {
   const supabase = await createClient();
-  
-  // We must fetch the user's org_id to insert the transaction
-  const { data: profile } = await supabase.from('profiles').select('org_id').single();
-  if (!profile?.org_id) throw new Error("User profile not found or user does not belong to an organization");
 
-  const { data, error } = await supabase
-    .from('transactions')
-    .insert({
-      amount_pence: amountPence,
-      profile_id: profileId || null,
-      org_id: profile.org_id
-    })
-    .select()
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("org_id")
     .single();
 
+  if (profileError || !profile?.org_id) {
+    throw new Error("Could not find your organisation. Please re-login.");
+  }
+
+  const description = (formData.get("description") as string).trim();
+  const amountStr = formData.get("amount") as string;
+  const type = formData.get("type") as string; // "income" | "expense"
+  const category = (formData.get("category") as string) || null;
+  const date = formData.get("date") as string;
+  const notes = (formData.get("notes") as string).trim() || null;
+
+  if (!description || !amountStr || !date) {
+    throw new Error("Description, amount and date are required.");
+  }
+
+  const absAmount = Math.round(parseFloat(amountStr) * 100);
+  const amountPence = type === "expense" ? -Math.abs(absAmount) : Math.abs(absAmount);
+
+  const { error } = await supabase.from("transactions").insert({
+    org_id: profile.org_id,
+    description,
+    category,
+    notes,
+    amount_pence: amountPence,
+    date,
+  });
+
   if (error) throw new Error(error.message);
-  
-  revalidatePath('/dashboard/transactions');
-  return data;
+
+  revalidatePath("/dashboard/transactions");
+  revalidatePath("/dashboard");
+  redirect("/dashboard/transactions");
 }
+
+export async function updateTransaction(id: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const description = (formData.get("description") as string).trim();
+  const amountStr = formData.get("amount") as string;
+  const type = formData.get("type") as string;
+  const category = (formData.get("category") as string) || null;
+  const date = formData.get("date") as string;
+  const notes = (formData.get("notes") as string).trim() || null;
+
+  if (!description || !amountStr || !date) {
+    throw new Error("Description, amount and date are required.");
+  }
+
+  const absAmount = Math.round(parseFloat(amountStr) * 100);
+  const amountPence = type === "expense" ? -Math.abs(absAmount) : Math.abs(absAmount);
+
+  const { error } = await supabase
+    .from("transactions")
+    .update({ description, category, notes, amount_pence: amountPence, date })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/dashboard/transactions");
+  revalidatePath("/dashboard");
+  redirect("/dashboard/transactions");
+}
+
+export async function deleteTransaction(formData: FormData) {
+  const id = formData.get("id") as string;
+  if (!id) throw new Error("Missing transaction id");
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("transactions").delete().eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/dashboard/transactions");
+  revalidatePath("/dashboard");
+}
+
+export const INCOME_CATEGORIES = [
+  "Regular giving",
+  "Tithe & offering",
+  "Special offering",
+  "Fundraising",
+  "Grant",
+  "Hall hire",
+  "Wedding / funeral fees",
+  "Other income",
+] as const;
+
+export const EXPENSE_CATEGORIES = [
+  "Payroll & wages",
+  "Building & facilities",
+  "Ministry & outreach",
+  "Administration",
+  "Worship & music",
+  "Utilities",
+  "Mission giving",
+  "Insurance",
+  "Community events",
+  "Other expense",
+] as const;
