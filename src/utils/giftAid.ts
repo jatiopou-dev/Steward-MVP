@@ -20,6 +20,21 @@ export interface Transaction {
   };
 }
 
+export type GiftAidSourceTransaction = {
+  id: string;
+  amount_pence: number;
+  date: string;
+  is_gift_aid_claimed: boolean;
+  members: {
+    title: string | null;
+    first_name: string;
+    last_name: string;
+    address_line1: string | null;
+    postcode: string | null;
+    is_gift_aid_eligible: boolean;
+  } | null;
+};
+
 /**
  * Calculates the total claimable Gift Aid (25% top-up) for a given set of transactions.
  * Returns the amount in pence.
@@ -74,4 +89,25 @@ export function generateHmrcCsv(transactions: Transaction[]): string {
   });
 
   return [headers.join(","), ...rows].join("\n");
+}
+
+export function mapToGiftAidTransactions(
+  transactions: GiftAidSourceTransaction[]
+): Transaction[] {
+  return transactions
+    .filter((tx) => tx.amount_pence > 0 && tx.members)
+    .map((tx) => ({
+      id: tx.id,
+      amountPence: tx.amount_pence,
+      date: new Date(tx.date),
+      isGiftAidClaimed: tx.is_gift_aid_claimed,
+      member: {
+        title: tx.members?.title ?? "",
+        firstName: tx.members?.first_name ?? "",
+        surname: tx.members?.last_name ?? "",
+        houseNameOrNumber: tx.members?.address_line1 ?? "",
+        postcode: tx.members?.postcode ?? "",
+        isGiftAidEligible: tx.members?.is_gift_aid_eligible ?? false,
+      },
+    }));
 }

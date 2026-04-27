@@ -13,6 +13,7 @@ export type Transaction = {
   date: string;
   is_gift_aid_claimed: boolean;
   profile_id: string | null;
+  member_id: string | null;
   org_id: string;
   created_at: string;
 };
@@ -49,6 +50,7 @@ export async function createTransaction(formData: FormData) {
   const category = (formData.get("category") as string) || null;
   const date = formData.get("date") as string;
   const notes = (formData.get("notes") as string).trim() || null;
+  const memberId = (formData.get("member_id") as string) || null;
 
   if (!description || !amountStr || !date) {
     throw new Error("Description, amount and date are required.");
@@ -64,6 +66,7 @@ export async function createTransaction(formData: FormData) {
     notes,
     amount_pence: amountPence,
     date,
+    member_id: memberId,
   });
 
   if (error) throw new Error(error.message);
@@ -82,6 +85,7 @@ export async function updateTransaction(id: string, formData: FormData) {
   const category = (formData.get("category") as string) || null;
   const date = formData.get("date") as string;
   const notes = (formData.get("notes") as string).trim() || null;
+  const memberId = (formData.get("member_id") as string) || null;
 
   if (!description || !amountStr || !date) {
     throw new Error("Description, amount and date are required.");
@@ -92,7 +96,7 @@ export async function updateTransaction(id: string, formData: FormData) {
 
   const { error } = await supabase
     .from("transactions")
-    .update({ description, category, notes, amount_pence: amountPence, date })
+    .update({ description, category, notes, amount_pence: amountPence, date, member_id: memberId })
     .eq("id", id);
 
   if (error) throw new Error(error.message);
