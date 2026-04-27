@@ -15,7 +15,7 @@ export interface DenominationTerms {
   icon: string;
 }
 
-const termsMap: Record<Denomination, DenominationTerms> = {
+export const termsMap: Record<Denomination, DenominationTerms> = {
   anglican: { giving: "Planned giving (FWO)", body: "PCC", minister: "Vicar", tier: "Diocese", label: "Anglican", icon: "✝️" },
   baptist: { giving: "Covenanted giving", body: "Deacons", minister: "Minister", tier: "Association", label: "Baptist", icon: "🕊️" },
   methodist: { giving: "Planned giving", body: "Church Council", minister: "Minister", tier: "Circuit", label: "Methodist", icon: "🔔" },
@@ -34,8 +34,14 @@ interface DenominationContextType {
 
 const DenominationContext = createContext<DenominationContextType | undefined>(undefined);
 
-export function DenominationProvider({ children }: { children: ReactNode }) {
-  const [denomination, setDenomination] = useState<Denomination>("baptist"); // Defaulting to Baptist for MVP prototype
+export function DenominationProvider({
+  children,
+  initialDenomination = "baptist",
+}: {
+  children: ReactNode;
+  initialDenomination?: Denomination;
+}) {
+  const [denomination, setDenomination] = useState<Denomination>(initialDenomination);
 
   return (
     <DenominationContext.Provider value={{
