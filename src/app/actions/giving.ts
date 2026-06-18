@@ -130,12 +130,13 @@ export async function createGivingRecord(formData: FormData) {
   const amountPence = Math.round(parseFloat(amountStr) * 100);
   const date = formData.get("date") as string;
   const memberId = (formData.get("member_id") as string) || null;
+  const fundId = (formData.get("fund_id") as string) || null;
   const category = (formData.get("category") as string) || "Regular giving";
   const notes = (formData.get("notes") as string).trim() || null;
   const descriptionInput = (formData.get("description") as string).trim();
 
-  if (!amountStr || !date || isNaN(amountPence) || amountPence <= 0) {
-    throw new Error("Amount and date are required.");
+  if (!amountStr || !date || !fundId || isNaN(amountPence) || amountPence <= 0) {
+    throw new Error("Amount, date and fund are required.");
   }
 
   let description = descriptionInput;
@@ -153,6 +154,7 @@ export async function createGivingRecord(formData: FormData) {
   const { error } = await supabase.from("transactions").insert({
     org_id: profile.org_id,
     member_id: memberId,
+    fund_id: fundId,
     description,
     category,
     notes,
@@ -168,4 +170,3 @@ export async function createGivingRecord(formData: FormData) {
   revalidatePath("/dashboard");
   redirect("/dashboard/giving");
 }
-

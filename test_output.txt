@@ -1,0 +1,13 @@
+
+> steward-app@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.9 /Users/jeffsmac/Gemini/Antigravity/Scratch/Steward app/steward-app
+
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  16:09:53
+   Duration  987ms (transform 196ms, setup 0ms, import 466ms, tests 17ms, environment 0ms)
+

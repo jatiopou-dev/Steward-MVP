@@ -84,7 +84,7 @@ export async function updateBankAccount(
 
   const { data, error } = await admin
     .from('bank_accounts')
-    .update(updates)
+    .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
     .eq('organisation_id', organisation_id)
     .select()

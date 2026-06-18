@@ -1,16 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Topbar from "@/components/dashboard/Topbar";
 import { createTransaction } from "@/app/actions/transactions";
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from "@/utils/domainOptions";
+import { getFundOptions, type FundOption } from "@/app/actions/funds";
 
 export default function NewTransactionPage() {
   const [type, setType] = useState<"income" | "expense">("income");
   const [isPending, setIsPending] = useState(false);
-  const router = useRouter();
+  const [funds, setFunds] = useState<FundOption[]>([]);
+
+  useEffect(() => {
+    getFundOptions().then(setFunds);
+  }, []);
 
   const categories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
@@ -114,6 +118,21 @@ export default function NewTransactionPage() {
             </div>
 
             <div className="form-grp">
+              <label>Fund account *</label>
+              <select name="fund_id" required defaultValue="">
+                <option value="" disabled>— Select fund —</option>
+                {funds.map((fund) => (
+                  <option key={fund.id} value={fund.id}>{fund.name}</option>
+                ))}
+              </select>
+              {funds.length === 0 && (
+                <div className="form-hint">
+                  Create an active fund account before recording transactions.
+                </div>
+              )}
+            </div>
+
+            <div className="form-grp">
               <label>Category</label>
               <select name="category">
                 <option value="">— Select category —</option>
@@ -138,7 +157,7 @@ export default function NewTransactionPage() {
                 type="submit"
                 className="btn btn-forest"
                 style={{ flex: 1 }}
-                disabled={isPending}
+                disabled={isPending || funds.length === 0}
               >
                 {isPending ? "Saving…" : "Save transaction"}
               </button>

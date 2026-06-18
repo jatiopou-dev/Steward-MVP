@@ -152,7 +152,7 @@ export async function updateAppeal(
 export async function archiveAppeal(
   id: string,
   orgId: string
-): Promise<ActionResult> {
+): Promise<ActionResult<void>> {
   if (!id || !orgId) return { error: 'ID and organisation ID required' };
 
   const actorId = await requireRole(orgId, FINANCE_ROLES);

@@ -4,10 +4,11 @@ import { createOrganization } from "@/app/actions/organizations";
 export default function OnboardingPage() {
   return (
     <div className="screen center" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "var(--bg-muted)" }}>
-      <div className="card" style={{ maxWidth: 400, width: "100%", padding: "2rem" }}>
+      <div className="card" style={{ maxWidth: 460, width: "100%", padding: "2rem" }}>
         <h1 className="card-title" style={{ marginBottom: "0.5rem" }}>Welcome to Steward</h1>
         <p className="card-sub" style={{ marginBottom: "2rem" }}>
-          Let's setup your organization to get started. 
+          Set up your church workspace. Steward will tailor terminology to your
+          denomination and create starter fund accounts for your first dashboard.
         </p>
 
         <form action={createOrganization}>
@@ -42,8 +43,27 @@ export default function OnboardingPage() {
             </select>
           </div>
 
+          <div
+            style={{
+              background: "var(--parchment)",
+              border: "1px solid var(--parchment2)",
+              borderRadius: "8px",
+              padding: "1rem",
+              marginBottom: "1.5rem",
+            }}
+          >
+            <div style={{ fontSize: ".82rem", fontWeight: 600, color: "var(--forest)", marginBottom: ".4rem" }}>
+              Starter setup included
+            </div>
+            <ul style={{ margin: 0, paddingLeft: "1.1rem", color: "var(--stone2)", fontSize: ".8rem", lineHeight: 1.7 }}>
+              <li>General, Building, and Mission fund accounts</li>
+              <li>Denomination-specific giving and leadership terms</li>
+              <li>A clean dashboard ready for transactions and members</li>
+            </ul>
+          </div>
+
           <button type="submit" className="btn btn-forest" style={{ width: "100%" }}>
-            Create Organization
+            Create church workspace
           </button>
         </form>
       </div>

@@ -36,6 +36,11 @@ function categoryIcon(category: string | null, isIncome: boolean): string {
   return map[category] ?? (isIncome ? "🎁" : "💳");
 }
 
+function relatedFundName(funds: { name: string } | { name: string }[] | null): string {
+  if (Array.isArray(funds)) return funds[0]?.name ?? "Unassigned fund";
+  return funds?.name ?? "Unassigned fund";
+}
+
 export default async function DashboardOverview() {
   const supabase = await createClient();
 
@@ -79,7 +84,7 @@ export default async function DashboardOverview() {
   // Recent 5 transactions (all time, newest first)
   const { data: recentTxs } = await supabase
     .from("transactions")
-    .select("id, description, category, amount_pence, date")
+    .select("id, description, category, amount_pence, date, funds(name)")
     .order("date", { ascending: false })
     .limit(5);
 
@@ -189,7 +194,7 @@ export default async function DashboardOverview() {
                       <div className="tx-body">
                         <div className="tx-name">{tx.description || "—"}</div>
                         <div className="tx-meta">
-                          {tx.category ?? "Uncategorised"} · {formatDate(tx.date)}
+                          {relatedFundName(tx.funds)} · {tx.category ?? "Uncategorised"} · {formatDate(tx.date)}
                         </div>
                       </div>
                       <div className={`tx-amt ${isIncome ? "inc" : "exp"}`}>

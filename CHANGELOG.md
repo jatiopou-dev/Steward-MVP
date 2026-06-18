@@ -4,6 +4,26 @@ All notable changes to Steward are documented here.
 
 ---
 
+## [M2] Finance Setup — 2026-06-18
+
+### Added
+- Migrations 011–013: `appeals`, `donors`, `bank_accounts` tables with RLS
+- Server actions: `src/app/actions/v2/appeals.ts` — createAppeal, getAppeal, listAppeals, updateAppeal, archiveAppeal
+- Server actions: `src/app/actions/v2/donors.ts` — createDonor, getDonor, listDonors, updateDonor
+- Server actions: `src/app/actions/v2/bankAccounts.ts` — createBankAccount, listBankAccounts, updateBankAccount
+- Zod schemas: createAppealSchema, updateAppealSchema, createDonorSchema, updateDonorSchema, createBankAccountSchema, updateBankAccountSchema
+- TypeScript types: Appeal, Donor, BankAccount, AppealStatus, DonorStatus, BankAccountStatus
+- Unit tests for all M2 Zod schemas
+
+### Security
+- RLS on all three tables; appeals readable by all members, donors/bank_accounts restricted by role
+- Finance manager and above can mutate appeals; finance_assistant can mutate donors
+- Bank account create/update restricted to owner/admin
+- Audit log on appeal create/update/archive and donor create/update
+- No hard deletes — status='archived' pattern enforced
+
+---
+
 ## [M1] — 2026-06-18
 
 ### Added

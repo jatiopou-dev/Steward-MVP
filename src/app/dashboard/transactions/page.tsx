@@ -133,6 +133,7 @@ export default async function TransactionsPage() {
                     <div className="tx-body">
                       <div className="tx-name">{tx.description || "—"}</div>
                       <div className="tx-meta">
+                        <span style={{ marginRight: ".5rem" }}>{tx.funds?.name ?? "Unassigned fund"}</span>
                         {tx.category && (
                           <span style={{ marginRight: ".5rem" }}>{tx.category}</span>
                         )}

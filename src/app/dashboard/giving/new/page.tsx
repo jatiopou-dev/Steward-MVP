@@ -5,6 +5,7 @@ import {
   createGivingRecord,
   getGivingMembers,
 } from "@/app/actions/giving";
+import { getFundOptions } from "@/app/actions/funds";
 
 const GIVING_CATEGORIES = [
   "Regular giving",
@@ -23,7 +24,7 @@ function memberDisplayName(member: {
 }
 
 export default async function NewGivingPage() {
-  const members = await getGivingMembers();
+  const [members, funds] = await Promise.all([getGivingMembers(), getFundOptions()]);
   const today = new Date().toISOString().split("T")[0];
 
   return (
@@ -70,6 +71,16 @@ export default async function NewGivingPage() {
                 <label>Date *</label>
                 <input type="date" name="date" defaultValue={today} required />
               </div>
+            </div>
+
+            <div className="form-grp">
+              <label>Fund account *</label>
+              <select name="fund_id" required defaultValue="">
+                <option value="" disabled>— Select fund —</option>
+                {funds.map((fund) => (
+                  <option key={fund.id} value={fund.id}>{fund.name}</option>
+                ))}
+              </select>
             </div>
 
             <div className="form-grp">
@@ -123,7 +134,7 @@ export default async function NewGivingPage() {
             )}
 
             <div style={{ display: "flex", gap: ".8rem", marginTop: "1.8rem" }}>
-              <button type="submit" className="btn btn-forest" style={{ flex: 1 }}>
+              <button type="submit" className="btn btn-forest" style={{ flex: 1 }} disabled={funds.length === 0}>
                 Save giving record
               </button>
               <Link href="/dashboard/giving" className="btn btn-outline">
@@ -136,4 +147,3 @@ export default async function NewGivingPage() {
     </>
   );
 }
-

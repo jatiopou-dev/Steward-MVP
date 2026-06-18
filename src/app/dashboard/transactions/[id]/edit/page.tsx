@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Topbar from "@/components/dashboard/Topbar";
 import { createClient } from "@/utils/supabase/server";
 import EditTransactionForm from "./EditTransactionForm";
+import { getFundOptions } from "@/app/actions/funds";
 
 async function getTransaction(id: string) {
   const supabase = await createClient();
@@ -22,7 +23,7 @@ export default async function EditTransactionPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const tx = await getTransaction(id);
+  const [tx, funds] = await Promise.all([getTransaction(id), getFundOptions()]);
   if (!tx) notFound();
 
   return (
@@ -38,7 +39,7 @@ export default async function EditTransactionPage({
       />
       <div className="content">
         <div className="card" style={{ maxWidth: 560 }}>
-          <EditTransactionForm tx={tx} />
+          <EditTransactionForm tx={tx} funds={funds} />
         </div>
       </div>
     </>

@@ -15,8 +15,10 @@ export default function FundForm({ defaultValues, onSubmit, submitLabel }: Props
   const [isPending, setIsPending] = useState(false);
   const [selectedType, setSelectedType] = useState(defaultValues?.type ?? "unrestricted");
 
-  const balanceDisplay = defaultValues?.balance_pence != null
-    ? (Math.abs(defaultValues.balance_pence) / 100).toFixed(2)
+  const balanceDisplay = defaultValues?.opening_balance_pence != null
+    ? (Math.abs(defaultValues.opening_balance_pence) / 100).toFixed(2)
+    : defaultValues?.balance_pence != null
+      ? (Math.abs(defaultValues.balance_pence) / 100).toFixed(2)
     : "";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -93,7 +95,7 @@ export default function FundForm({ defaultValues, onSubmit, submitLabel }: Props
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
         <div className="form-grp">
-          <label>Opening / current balance (£)</label>
+          <label>Opening balance (£)</label>
           <input
             type="number"
             name="balance"
@@ -102,6 +104,7 @@ export default function FundForm({ defaultValues, onSubmit, submitLabel }: Props
             defaultValue={balanceDisplay}
             placeholder="0.00"
           />
+          <div className="form-hint">Current balance updates automatically from linked transactions.</div>
         </div>
         <div className="form-grp">
           <label>Status</label>

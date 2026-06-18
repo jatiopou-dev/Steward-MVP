@@ -10,6 +10,7 @@ export type Fund = {
   name: string;
   type: FundType;
   balance_pence: number;
+  opening_balance_pence: number;
   description: string | null;
   status: FundStatus;
   created_at: string;
@@ -17,6 +18,7 @@ export type Fund = {
 
 export type FundType = "unrestricted" | "restricted" | "designated";
 export type FundStatus = "active" | "monitor" | "closed";
+export type FundOption = Pick<Fund, "id" | "name" | "type" | "status">;
 
 export async function getFunds(): Promise<Fund[]> {
   const supabase = await createClient();
@@ -29,6 +31,22 @@ export async function getFunds(): Promise<Fund[]> {
     console.error("getFunds error:", error);
     return [];
   }
+  return data ?? [];
+}
+
+export async function getFundOptions(): Promise<FundOption[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("funds")
+    .select("id, name, type, status")
+    .neq("status", "closed")
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("getFundOptions error:", error);
+    return [];
+  }
+
   return data ?? [];
 }
 
@@ -66,6 +84,7 @@ export async function createFund(formData: FormData) {
     name,
     type: (formData.get("type") as FundType) || "unrestricted",
     balance_pence: isNaN(balancePence) ? 0 : balancePence,
+    opening_balance_pence: isNaN(balancePence) ? 0 : balancePence,
     description: (formData.get("description") as string).trim() || null,
     status: (formData.get("status") as FundStatus) || "active",
   });
@@ -84,14 +103,29 @@ export async function updateFund(id: string, formData: FormData) {
   if (!name) throw new Error("Fund name is required.");
 
   const balanceStr = (formData.get("balance") as string) || "0";
-  const balancePence = Math.round(parseFloat(balanceStr) * 100);
+  const openingBalancePence = Math.round(parseFloat(balanceStr) * 100);
+
+  const { data: existing, error: existingError } = await supabase
+    .from("funds")
+    .select("balance_pence, opening_balance_pence")
+    .eq("id", id)
+    .single();
+
+  if (existingError || !existing) {
+    throw new Error(existingError?.message || "Could not find fund.");
+  }
+
+  const nextOpeningBalance = isNaN(openingBalancePence) ? 0 : openingBalancePence;
+  const currentOpeningBalance = existing.opening_balance_pence ?? existing.balance_pence;
+  const nextCurrentBalance = existing.balance_pence + nextOpeningBalance - currentOpeningBalance;
 
   const { error } = await supabase
     .from("funds")
     .update({
       name,
       type: (formData.get("type") as FundType) || "unrestricted",
-      balance_pence: isNaN(balancePence) ? 0 : balancePence,
+      balance_pence: nextCurrentBalance,
+      opening_balance_pence: nextOpeningBalance,
       description: (formData.get("description") as string).trim() || null,
       status: (formData.get("status") as FundStatus) || "active",
     })

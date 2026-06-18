@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { updateTransaction } from "@/app/actions/transactions";
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from "@/utils/domainOptions";
+import { type FundOption } from "@/app/actions/funds";
 
 type Tx = {
   id: string;
@@ -12,9 +13,10 @@ type Tx = {
   date: string;
   category: string | null;
   notes: string | null;
+  fund_id: string | null;
 };
 
-export default function EditTransactionForm({ tx }: { tx: Tx }) {
+export default function EditTransactionForm({ tx, funds }: { tx: Tx; funds: FundOption[] }) {
   const initialType = tx.amount_pence >= 0 ? "income" : "expense";
   const [type, setType] = useState<"income" | "expense">(initialType);
   const [isPending, setIsPending] = useState(false);
@@ -103,6 +105,16 @@ export default function EditTransactionForm({ tx }: { tx: Tx }) {
             required
           />
         </div>
+      </div>
+
+      <div className="form-grp">
+        <label>Fund account *</label>
+        <select name="fund_id" required defaultValue={tx.fund_id ?? ""}>
+          <option value="" disabled>— Select fund —</option>
+          {funds.map((fund) => (
+            <option key={fund.id} value={fund.id}>{fund.name}</option>
+          ))}
+        </select>
       </div>
 
       <div className="form-grp">
