@@ -1,31 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  --forest:#1C3A2E;
-  --forest2:#254D3D;
-  --forest3:#2E6050;
-  --sage:#4A8C6F;
-  --sage2:#6AAE90;
-  --sage3:#A8D4BC;
-  --sage-bg:rgba(74,140,111,0.09);
-  --parchment:#FAF7F0;
-  --parchment2:#F3EFE5;
-  --cream:#FFFDF8;
-  --gold:#C49A3C;
-  --gold2:#E0B84A;
-  --gold3:#F5D878;
-  --gold-bg:rgba(196,154,60,0.1);
-  --stone:#8C8070;
-  --stone2:#B8AFA0;
-  --stone3:#DDD8CE;
-  --ink:#1A1914;
-  --ink2:#3A3730;
-  --ink3:#6B6860;
-  --white:#FFFFFE;
-  --shadow:rgba(28,58,46,0.10);
-  --shadow2:rgba(28,58,46,0.18);
-  --rust:#A84830;
-  --rust-bg:rgba(168,72,48,0.09);
+  /* ── Violet / Purple scale (replaces forest/sage greens) ── */
+  --forest:#3B0764;
+  --forest2:#4C1D95;
+  --forest3:#5B21B6;
+  --sage:#7C3AED;
+  --sage2:#A78BFA;
+  --sage3:#C4B5FD;
+  --sage-bg:rgba(124,58,237,0.08);
+
+  /* ── Lavender-white backgrounds (replaces warm parchment) ── */
+  --parchment:#F5F3FF;
+  --parchment2:#EDE9FE;
+  --cream:#FDFCFF;
+
+  /* ── Warm amber gold (accent, same role as before) ── */
+  --gold:#A16207;
+  --gold2:#B45309;
+  --gold3:#D97706;
+  --gold-bg:rgba(161,98,7,0.10);
+
+  /* ── Neutral purple-gray (replaces warm stone) ── */
+  --stone:#6B7280;
+  --stone2:#9CA3AF;
+  --stone3:#DDD6FE;
+
+  /* ── Deep indigo ink (replaces warm near-black) ── */
+  --ink:#1E1B4B;
+  --ink2:#312E81;
+  --ink3:#4338CA;
+
+  --white:#FDFCFF;
+  --shadow:rgba(76,29,149,0.10);
+  --shadow2:rgba(76,29,149,0.18);
+  --rust:#DC2626;
+  --rust-bg:rgba(220,38,38,0.09);
 }
 
 @theme inline {
