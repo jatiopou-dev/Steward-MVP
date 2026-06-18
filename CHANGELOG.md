@@ -4,113 +4,312 @@ All notable changes to Steward are documented here.
 
 ---
 
-## [M5] — 2026-06-18 — Gift Aid
+## [M5] — 2026-06-18 — Gift Aid (backend pipeline)
 
-### Added
-- `gift_aid_declarations` table with RLS (migration 017) — enduring, retro, single declaration types
-- `gift_aid_claims` table with RLS — draft/submitted status, period totals
-- `gift_aid_claim_donations` join table — links donations to claims with per-donation gift_aid_pence
-- `createDeclaration` server action — records donor Gift Aid declaration, verifies gift_aid_eligible
-- `revokeDeclaration` server action — sets revoked_at; declarations never hard-deleted
-- `listDeclarations` server action — filterable by donor, auditor read access
-- `createClaim` server action — finds all eligible donations in date range, skips already-submitted
-- `submitClaim` server action — marks claim submitted, generates Charities Online CSV + summary
-- `buildCharitiesOnlineCsv` pure function — HMRC bulk upload format (7-column CSV)
-- `isDeclarationActive` pure helper — exported for testing, checks coverage dates + revocation
-- Zod schemas: `createDeclarationSchema`, `revokeDeclarationSchema`, `listDeclarationsSchema`, `createClaimSchema`, `submitClaimSchema`
-- TypeScript types: `GiftAidDeclaration`, `GiftAidClaim`, `GiftAidClaimDonation`, `ClaimSummary`, `SubmitClaimResult`, `DeclarationType`, `ClaimStatus`
+### Database (migration 017)
+- `gift_aid_declarations` — donor Gift Aid declarations with type, date range, signed name, revocation timestamp
+  - `declaration_type`: `enduring` (open-ended), `retro` (historical coverage), `single` (one donation)
+  - `effective_from` / `effective_to` (nullable) — date range covered
+  - `revoked_at` (nullable) — soft-revoke only; never hard-deleted for HMRC audit trail
+  - RLS: SELECT for owner/admin/finance_manager/auditor; INSERT/UPDATE for owner/admin/finance_manager
+- `gift_aid_claims` — HMRC claim batches
+  - `status`: `draft` → `submitted`; once submitted, immutable
+  - Stores `total_donations_pence`, `total_gift_aid_pence`, `donation_count` as running totals
+  - `submitted_at` / `submitted_by` recorded on submission
+  - RLS: SELECT for owner/admin/finance_manager/auditor; INSERT/UPDATE for owner/admin/finance_manager
+- `gift_aid_claim_donations` — join table linking donations to claims
+  - `gift_aid_pence` stored per row (= `ROUND(amount_pence × 25 / 100)`)
+  - `declaration_id` recorded for each row — full audit trail of which declaration covered which donation
+  - RLS derived from parent claim's organisation_id
+- Indexes: org, donor, active-declarations partial index (WHERE revoked_at IS NULL), claim donations
 
-### Rules
-- Gift Aid pence = ROUND(amount_pence × 25 / 100) per donation
-- Donor must have gift_aid_eligible = true AND an active declaration covering the donation date
-- Donations in submitted claims are excluded from new claims (draft claims do not block)
-- Declarations are revoked, never deleted — full audit trail for HMRC
+### Server actions (`src/app/actions/v2/giftAid.ts`)
+- `createDeclaration` — validates `CreateDeclarationInput`, verifies donor exists in org and has `gift_aid_eligible = true`, inserts declaration, writes audit log `gift_aid.declaration_created`
+- `revokeDeclaration` — guards against double-revoke, sets `revoked_at = now()`, writes audit log `gift_aid.declaration_revoked`; declaration remains in DB
+- `listDeclarations` — read-only, accessible by auditor role; optional `donor_id` filter; ordered by `created_at desc`
+- `createClaim` — scans all donations in date range, cross-references gift-aid-eligible donors and active declarations, excludes donations already in a **submitted** claim, calculates `gift_aid_pence` per donation, inserts `gift_aid_claims` + all `gift_aid_claim_donations` rows, writes audit log `gift_aid.claim_created`
+- `submitClaim` — verifies claim is `draft`, fetches donation details for CSV, updates claim to `submitted`, generates HMRC CSV, writes audit log `gift_aid.claim_submitted`, returns `SubmitClaimResult` with claim + summary + csv string
 
----
+### Pure helpers (`src/lib/giftAid/`)
+- `buildCharitiesOnlineCsv(rows)` — generates HMRC Charities Online bulk upload CSV
+  - 7 columns: Donor title, Donor first name, Donor last name, House name or number, Postcode, Donation date, Donation amount
+  - Name split on first space: `"Mary Jane Watson"` → first=`Mary`, last=`Jane Watson`; single-word names get blank last name
+  - Amount formatted as `"50.00"` (pence ÷ 100, 2 decimal places, no currency symbol)
+  - Title, house, postcode left blank (not stored in Steward)
+- `isDeclarationActive(declaration, transaction_date)` — pure coverage check
+  - Returns `false` if revoked, if `effective_from > transaction_date`, or if `effective_to < transaction_date`
+  - Boundary-inclusive: `effective_from === transaction_date` and `effective_to === transaction_date` both return `true`
 
-## [M4] — 2026-06-18 — Reconciliation
+### Validation (`src/lib/validation/v2.ts`)
+- `createDeclarationSchema` — uuid org/donor, enum declaration_type, YYYY-MM-DD dates, ISO datetime signed_at, signed_by_name min 1 max 200
+- `revokeDeclarationSchema` — uuid org + declaration_id
+- `listDeclarationsSchema` — uuid org, optional uuid donor_id
+- `createClaimSchema` — uuid org, YYYY-MM-DD from/to, refine: from ≤ to
+- `submitClaimSchema` — uuid org + claim_id
+- Inferred TypeScript types: `CreateDeclarationInput`, `RevokeDeclarationInput`, `ListDeclarationsInput`, `CreateClaimInput`, `SubmitClaimInput`
 
-### Added
-- `reconciliation_periods` table with RLS (migration 016)
-- `closePeriod` server action — closes a calendar month, aggregates donation totals + appeal breakdown, marks donations as `reconciled`
-- `getPeriod` / `listPeriods` server actions — read period state (finance_manager + auditor)
-- `checkPeriodLocked` internal helper — returns true if a date falls in a closed period
-- Period lock enforcement in `importDonations` — rows targeting closed periods return `error` status with message `"Period YYYY-MM is closed"`
-- Audit log entry on every period close: `reconciliation.period_closed`
-- Zod schemas: `closePeriodSchema`, `getPeriodSchema`
-- TypeScript types: `ReconciliationPeriod`, `AppealSummary`, `PeriodStatus`
+### TypeScript types (`src/lib/types/v2.ts`)
+- `DeclarationType` — `'enduring' | 'retro' | 'single'`
+- `ClaimStatus` — `'draft' | 'submitted'`
+- `GiftAidDeclaration`, `GiftAidClaim`, `GiftAidClaimDonation`
+- `ClaimSummary` — claim + donation_count + total_donations_pence + total_gift_aid_pence
+- `SubmitClaimResult` — claim + summary + csv string
 
-### Rules
-- Closed months are immutable — no donations can be imported into a closed period
-- Empty months can be closed (donation_count=0 is valid)
-- Closing an already-closed month returns an error
-- Only owner/admin/finance_manager can close periods; auditor read-only
-
----
-
-## [M3] Donation Imports — 2026-06-18
-
-### Added
-- Migrations 014–015: `donation_import_batches` and `donations` tables with RLS
-- Column maps: `src/lib/importMaps/bankCsv.ts` — generic UK bank CSV parser
-- Column maps: `src/lib/importMaps/stripe.ts` — Stripe dashboard export parser
-- Server actions: `src/app/actions/v2/imports.ts` — createImportBatch, importDonations, listImportBatches, listDonations
-- Zod schemas: createImportBatchSchema, importDonationRowSchema, importDonationsSchema, listDonationsSchema
-- TypeScript types: DonationImportBatch, Donation, ImportRowResult, ImportBatchResult, ImportSource, ImportBatchStatus, DonationStatus
-- Unit tests for all M3 Zod schemas and column map pure functions (61 total tests passing)
-
-### Security
-- Donations inserted via admin client only — no client-side RLS insert policy on donations table
-- Duplicate prevention via DB unique constraint on (organisation_id, source, source_reference)
-- Raw CSV row preserved in raw_row jsonb — never mutated after insert
-- amount_pence integer only — no floats, no money stored as string
-- Audit log written on every completed import batch (action: import.completed)
-- Auditor role read-only; viewer excluded from all import/donation access
-
----
-
-## [M2] Finance Setup — 2026-06-18
-
-### Added
-- Migrations 011–013: `appeals`, `donors`, `bank_accounts` tables with RLS
-- Server actions: `src/app/actions/v2/appeals.ts` — createAppeal, getAppeal, listAppeals, updateAppeal, archiveAppeal
-- Server actions: `src/app/actions/v2/donors.ts` — createDonor, getDonor, listDonors, updateDonor
-- Server actions: `src/app/actions/v2/bankAccounts.ts` — createBankAccount, listBankAccounts, updateBankAccount
-- Zod schemas: createAppealSchema, updateAppealSchema, createDonorSchema, updateDonorSchema, createBankAccountSchema, updateBankAccountSchema
-- TypeScript types: Appeal, Donor, BankAccount, AppealStatus, DonorStatus, BankAccountStatus
-- Unit tests for all M2 Zod schemas
+### Tests (`src/__tests__/v2/giftAid.test.ts`)
+- 27 new tests (104 total across 6 test files)
+- `createDeclarationSchema`: valid enduring/retro, rejects missing name, empty name, invalid date format, invalid declaration_type
+- `createClaimSchema`: valid range, same-day range, rejects from > to (refine), invalid date format
+- `revokeDeclarationSchema`: valid, rejects non-uuid
+- `submitClaimSchema`: valid
+- `isDeclarationActive`: 7 boundary-condition cases covering revocation, before/after/on effective dates
+- `buildCharitiesOnlineCsv`: empty rows (header only), single row full column check, multi-word last name, single-word name, pence formatting (5000→50.00, 101→1.01), multiple rows length
 
 ### Security
-- RLS on all three tables; appeals readable by all members, donors/bank_accounts restricted by role
-- Finance manager and above can mutate appeals; finance_assistant can mutate donors
-- Bank account create/update restricted to owner/admin
+- Donor `gift_aid_eligible` flag must be `true` — declaration alone is not sufficient
+- Donations in **submitted** claims cannot be re-claimed; draft claims do not block
+- Declarations never hard-deleted — `revoked_at` soft-revoke preserves HMRC audit trail
+- All writes via admin client (service role); reads via anon client (RLS enforced)
+- Audit log on every declaration create/revoke and every claim create/submit
+- `gift_aid_pence` stored as integer; formula `ROUND(amount_pence × 25.0 / 100.0)` — no floats
+
+---
+
+## [M4] — 2026-06-18 — Period-Close Reconciliation (backend pipeline)
+
+### Database (migration 016)
+- `reconciliation_periods` — one row per (organisation, year, month)
+  - `status`: `open` | `closed` — soft lock only; no hard delete or reopen via API
+  - `donation_count`, `total_pence` (bigint) — aggregated at close time
+  - `summary_by_appeal` (jsonb) — array of `{ appeal_id, appeal_code, appeal_name, count, total_pence }` per appeal
+  - `closed_by` (auth.users ref), `closed_at` timestamptz — recorded on close
+  - Unique constraint on `(organisation_id, year, month)` — one period per calendar month per org
+  - RLS: SELECT for owner/admin/finance_manager/auditor; INSERT for owner/admin/finance_manager; no UPDATE/DELETE policy (admin client only)
+- Index added on `donations(organisation_id, transaction_date)` — used by close and lock-check queries
+
+### Server actions (`src/app/actions/v2/reconciliation.ts`)
+- `closePeriod(input)` — validates, checks caller role (finance_manager+), verifies period not already closed, aggregates all donations for the month, builds per-appeal summary by joining `appeals` table, upserts `reconciliation_periods` row, bulk-updates matching donations to `status='reconciled'`, writes audit log `reconciliation.period_closed`
+  - Empty months (zero donations) close successfully — `donation_count=0` is valid
+  - If bulk donation status update fails after period is closed, returns descriptive error rather than silently succeeding
+- `getPeriod(input)` — anon client (RLS), read roles, returns period or null
+- `listPeriods(organisation_id)` — anon client (RLS), returns all periods ordered `year desc, month desc`
+- `checkPeriodLocked(organisation_id, transaction_date)` — internal helper (not a server action endpoint), admin client, parses YYYY-MM-DD, returns `true` if a closed period exists for that calendar month
+
+### Lock enforcement (`src/app/actions/v2/imports.ts`)
+- `importDonations` now calls `checkPeriodLocked` per row before attempting insert
+- Rows targeting a closed period are rejected immediately: `status: 'error'`, message: `"Period YYYY-MM is closed"`
+- Other rows in the same batch continue processing — lock is per-row, not per-batch
+
+### Validation (`src/lib/validation/v2.ts`)
+- `closePeriodSchema` — uuid org, year int 2000–2100, month int 1–12
+- `getPeriodSchema` — same shape
+- Inferred types: `ClosePeriodInput`, `GetPeriodInput`
+
+### TypeScript types (`src/lib/types/v2.ts`)
+- `PeriodStatus` — `'open' | 'closed'`
+- `AppealSummary` — `{ appeal_id, appeal_code, appeal_name, count, total_pence }`
+- `ReconciliationPeriod` — full period row including nullable `closed_by`, `closed_at`, `summary_by_appeal`
+
+### Tests (`src/__tests__/v2/reconciliation.test.ts`)
+- 77 tests total at end of M4 (across all test files)
+- `closePeriodSchema`: invalid year/month ranges, missing fields
+- `getPeriodSchema`: valid inputs
+- `lastDayOfMonth` boundary tests: leap year Feb, Dec→Jan rollover, UTC safety
+
+### Security
+- Periods closed only once — already-closed returns error, no silent overwrite
+- No UPDATE or DELETE RLS policy on `reconciliation_periods` — only admin client can mutate
+- `checkPeriodLocked` uses admin client intentionally — bypasses RLS for internal server-side check only
+- Lock enforced server-side per import row — cannot be bypassed client-side
+- Audit log on every period close
+
+---
+
+## [M3] — 2026-06-18 — Donation Imports (backend pipeline)
+
+### Database (migrations 014–015)
+- `donation_import_batches` — one row per import operation
+  - `source`: `bank_csv` | `stripe` — identifies the import format
+  - `status`: `processing` → `complete` | `failed`
+  - `total_rows`, `success_count`, `error_count` — populated after processing
+  - `imported_by` (auth.users ref), `created_at`
+  - RLS: SELECT/INSERT for owner/admin/finance_manager; no viewer/assistant access
+- `donations` — individual donation records
+  - `source_reference` — original ID from source system (bank ref, Stripe charge ID)
+  - `transaction_date` (date), `amount_pence` (integer — no floats ever)
+  - `donor_id` (nullable FK to donors — matched post-import), `appeal_id` (nullable FK)
+  - `status`: `imported` → `matched` → `reconciled`
+  - `raw_row` (jsonb) — original CSV row preserved verbatim, never mutated
+  - `batch_id` FK to `donation_import_batches`
+  - Unique constraint on `(organisation_id, source, source_reference)` — prevents duplicate imports
+  - RLS: same as batches — no viewer access
+
+### Column maps (`src/lib/importMaps/`)
+- `bankCsv.ts` — generic UK bank CSV parser; maps columns: Date, Description, Amount, Reference → internal row shape; handles debit/credit sign convention
+- `stripe.ts` — Stripe dashboard export parser; maps: `created`, `description`, `amount`, `id` → internal row shape; converts Stripe cents (already integer) to pence
+
+### Server actions (`src/app/actions/v2/imports.ts`)
+- `createImportBatch(input)` — validates source, inserts batch row with `status='processing'`, returns batch record
+- `importDonations(input)` — processes array of `ImportDonationRow`, per row:
+  1. Validates row schema (Zod)
+  2. Checks period lock (`checkPeriodLocked`) — rejects if month is closed
+  3. Resolves `appeal_id` from `appeal_code` if provided
+  4. Inserts donation via admin client; on unique-constraint violation returns `duplicate` status (not error)
+  5. Accumulates `success_count` / `error_count`; updates batch to `complete`/`failed`
+  6. Writes audit log `import.completed` with totals
+  Returns `ImportBatchResult` with per-row `ImportRowResult` array
+- `listImportBatches(organisation_id)` — anon client, read roles, ordered `created_at desc`
+- `listDonations(input)` — anon client, filterable by `batch_id`, `status`, `appeal_id`, `donor_id`
+
+### Validation (`src/lib/validation/v2.ts`)
+- `createImportBatchSchema` — uuid org, enum source
+- `importDonationRowSchema` — source_reference string, transaction_date YYYY-MM-DD, amount_pence positive integer, optional appeal_code/donor_id/notes
+- `importDonationsSchema` — uuid org + batch_id, array of rows
+- `listDonationsSchema` — uuid org, optional filters
+- Inferred types: `CreateImportBatchInput`, `ImportDonationRow`, `ImportDonationsInput`, `ListDonationsInput`
+
+### TypeScript types (`src/lib/types/v2.ts`)
+- `ImportSource` — `'bank_csv' | 'stripe'`
+- `ImportBatchStatus` — `'processing' | 'complete' | 'failed'`
+- `DonationStatus` — `'imported' | 'matched' | 'reconciled'`
+- `DonationImportBatch`, `Donation` — full row types
+- `ImportRowResult` — `{ source_reference, status: 'success'|'error'|'duplicate', error? }`
+- `ImportBatchResult` — `{ batch, rows: ImportRowResult[], success_count, error_count }`
+
+### Tests (`src/__tests__/v2/imports.test.ts`)
+- 61 tests at end of M3
+- `createImportBatchSchema`, `importDonationRowSchema`, `importDonationsSchema`, `listDonationsSchema` — full validation coverage
+- Column map pure functions: correct field mapping, sign handling, reference extraction
+
+### Security
+- Donations inserted via admin client only — no client-facing RLS INSERT policy on donations
+- Unique constraint prevents duplicate re-imports silently returning `duplicate` per row
+- `raw_row` jsonb preserved verbatim — immutable after insert
+- `amount_pence` integer only — no floats stored
+- Audit log on every completed batch
+- Period lock check enforced server-side per row — cannot be bypassed
+
+---
+
+## [M2] — 2026-06-18 — Finance Setup (backend pipeline)
+
+### Database (migrations 011–013)
+- `appeals` — fundraising campaigns / giving funds
+  - `code` (unique per org), `name`, `description`, `status`: `active` | `archived`
+  - RLS: SELECT for all org members; INSERT/UPDATE for owner/admin/finance_manager
+- `donors` — individual donor records
+  - `display_name`, `email` (nullable), `gift_aid_eligible` (boolean, default false)
+  - `status`: `active` | `archived`
+  - RLS: SELECT/INSERT/UPDATE for owner/admin/finance_manager/finance_assistant
+- `bank_accounts` — org bank account records
+  - `account_name`, `sort_code`, `account_number` (last 4 only), `bank_name`
+  - `status`: `active` | `archived`
+  - RLS: SELECT for finance_manager+; INSERT/UPDATE for owner/admin only
+- RLS migration 013 applies all policies; `organisation_id` on every table
+
+### Server actions (`src/app/actions/v2/appeals.ts`)
+- `createAppeal` — role: finance_manager+; inserts appeal; writes audit log `appeal.created`
+- `getAppeal` — role: any member; returns single appeal by id
+- `listAppeals` — role: any member; returns all org appeals ordered by name
+- `updateAppeal` — role: finance_manager+; validates fields; writes audit log `appeal.updated`
+- `archiveAppeal` — role: finance_manager+; sets `status='archived'`; writes audit log `appeal.archived`
+
+### Server actions (`src/app/actions/v2/donors.ts`)
+- `createDonor` — role: finance_assistant+; inserts donor; writes audit log `donor.created`
+- `getDonor` — role: finance_assistant+; returns single donor
+- `listDonors` — role: finance_assistant+; returns all active donors ordered by name
+- `updateDonor` — role: finance_assistant+; validates fields; writes audit log `donor.updated`
+
+### Server actions (`src/app/actions/v2/bankAccounts.ts`)
+- `createBankAccount` — role: owner/admin only; inserts bank account
+- `listBankAccounts` — role: finance_manager+; returns all active accounts
+- `updateBankAccount` — role: owner/admin only; validates fields
+
+### Validation (`src/lib/validation/v2.ts`)
+- `createAppealSchema` — org uuid, code (min 1, max 20), name (min 1, max 200), optional description
+- `updateAppealSchema` — same fields, all optional (partial update)
+- `createDonorSchema` — org uuid, display_name, optional email (validated format), gift_aid_eligible boolean
+- `updateDonorSchema` — partial
+- `createBankAccountSchema` — org uuid, account_name, sort_code (6 digits), account_number (8 digits), bank_name
+- `updateBankAccountSchema` — partial
+
+### TypeScript types (`src/lib/types/v2.ts`)
+- `AppealStatus`, `DonorStatus`, `BankAccountStatus` — `'active' | 'archived'`
+- `Appeal`, `Donor`, `BankAccount` — full row types
+
+### Tests
+- Zod schema unit tests for all 6 schemas — valid inputs, invalid inputs, boundary cases
+
+### Security
+- No hard deletes — `status='archived'` enforced on all three entities
+- Bank account numbers never stored in full — sort_code + last 4 digits only
 - Audit log on appeal create/update/archive and donor create/update
-- No hard deletes — status='archived' pattern enforced
+- Role checks server-side on every mutation — never client-enforced
 
 ---
 
-## [M1] — 2026-06-18
+## [M1] — 2026-06-18 — Multi-tenant Foundation (backend pipeline)
 
-### Added
-- `organisations` table with hierarchical type support (denomination/network/conference/church/ministry)
-- `memberships` table with role enum (owner/admin/finance_manager/finance_assistant/viewer/auditor)
-- `audit_logs` table scoped to organisation
-- RLS helper functions: `is_org_member()` and `has_org_role()`
-- RLS policies on `profiles`, `organisations`, `memberships`, `audit_logs`
-- Service-role admin Supabase client (`src/utils/supabase/admin.ts`)
-- v2 server actions: `createOrganisation`, `getOrganisation`, `listUserOrganisations`
-- v2 server actions: `inviteUser`, `activateMembership`, `updateMemberRole`, `removeMember`, `listMembers`
-- Internal `createAuditLog` helper — writes on: org create, member invite, role change, member remove
-- Zod validation schemas for all v2 inputs
-- TypeScript types for Organisation, Membership, AuditLog
-- Vitest test framework with 11 passing validation unit tests
+### Database (migrations 007–010)
+- `organisations` — top-level tenant entity
+  - `org_type`: `denomination` | `network` | `conference` | `church` | `ministry` — hierarchical church structure support
+  - `status`: `active` | `archived` | `suspended`
+  - `slug` (unique), `name`, `settings` (jsonb for denomination config)
+- `memberships` — user-to-org join table
+  - `role`: `owner` | `admin` | `finance_manager` | `finance_assistant` | `viewer` | `auditor`
+  - `status`: `invited` → `active` | `disabled`
+  - `invited_by` (auth.users ref), `activated_at`
+- `audit_logs` — immutable event log scoped to org
+  - `action` (string e.g. `org.created`, `member.role_changed`), `entity_type`, `entity_id`
+  - `actor_user_id`, `old_data` (jsonb), `new_data` (jsonb), `created_at`
+  - No DELETE RLS policy — append-only by design
+- `profiles` — public user profile linked to `auth.users`
+- RLS helper functions (security-definer, bypasses RLS for internal checks):
+  - `public.is_org_member(org_id)` — returns true if caller has any active membership
+  - `public.has_org_role(org_id, roles[])` — returns true if caller's role is in the provided array
+- RLS policies on `profiles`, `organisations`, `memberships`, `audit_logs` — all tenant-scoped
+
+### Infrastructure
+- `src/utils/supabase/admin.ts` — synchronous `createAdminClient()` using `SUPABASE_SERVICE_ROLE_KEY`; service-role key never exposed to client
+- `src/utils/supabase/server.ts` — async `createClient()` using SSR auth helpers; anon key, RLS enforced
+- Vitest v4 test framework installed; `@` alias configured to `src/`; node environment
+
+### Server actions (`src/app/actions/v2/organisations.ts`)
+- `createOrganisation` — inserts org + auto-creates `owner` membership for caller; writes audit log `org.created`
+- `getOrganisation` — anon client (RLS); returns org if caller is member
+- `listUserOrganisations` — returns all orgs the caller has active membership in
+
+### Server actions (`src/app/actions/v2/memberships.ts`)
+- `inviteUser` — role: admin+; creates `invited` membership; writes audit log `member.invited`
+- `activateMembership` — called by invitee; sets membership `active`; writes audit log `member.activated`
+- `updateMemberRole` — role: admin+; cannot demote self; writes audit log `member.role_changed` with old + new role
+- `removeMember` — role: admin+; cannot remove self; sets `disabled`; writes audit log `member.removed`
+- `listMembers` — returns all active + invited members for org
+
+### Audit log helper (`src/app/actions/v2/audit.ts`)
+- `createAuditLog({ organisation_id, actor_user_id, action, entity_type, entity_id, old_data?, new_data? })` — writes via admin client (bypasses RLS); used by all v2 server actions
+
+### Validation (`src/lib/validation/v2.ts`)
+- `createOrganisationSchema` — name, slug (kebab-case), org_type enum
+- `inviteMemberSchema` — org uuid, email, role enum
+- `updateMemberRoleSchema` — org uuid, membership uuid, new role enum
+- `removeMemberSchema` — org uuid, membership uuid
+- Inferred types: `CreateOrganisationInput`, `InviteMemberInput`, `UpdateMemberRoleInput`, `RemoveMemberInput`
+
+### TypeScript types (`src/lib/types/v2.ts`)
+- `OrgType`, `OrgStatus`, `MemberRole`, `MemberStatus`
+- `Organisation`, `Membership`, `AuditLog`
+- `ActionResult<T>` — `{ data: T } | { error: string }` — standard return type for all server actions
+
+### Tests (`src/__tests__/v2/organisations.test.ts`, `memberships.test.ts`)
+- 11 passing tests at end of M1
+- Schema validation: valid inputs, invalid slugs, invalid role enums, uuid validation
 
 ### Security
-- All membership mutations verify caller role server-side before executing
-- RLS blocks cross-tenant reads at the database layer
-- Service-role key never exposed to client
-- Audit log inserts bypass RLS via service-role (no client-facing insert policy)
-- Owners cannot demote themselves or remove themselves
+- All membership mutations verify caller role server-side — no client-enforced checks
+- Owners cannot demote or remove themselves — guard in `updateMemberRole` and `removeMember`
+- RLS blocks all cross-tenant reads at DB layer
+- Service-role key server-side only; never in any client bundle
+- Audit log inserts use admin client — no client-facing INSERT policy on `audit_logs`
 
 ---
 
