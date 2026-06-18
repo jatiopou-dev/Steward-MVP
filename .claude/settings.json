@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"/Users/jeffsmac/Gemini/Antigravity/Scratch/Steward app/steward-app/.claude/scripts/update-changelog.sh\"",
+            "timeout": 30,
+            "statusMessage": "Updating CHANGELOG..."
+          }
+        ]
+      }
+    ]
+  }
+}

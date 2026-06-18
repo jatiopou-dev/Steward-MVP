@@ -6,6 +6,24 @@ All notable changes to Steward are documented here.
 
 ## [Unreleased]
 
+### Changed — 2026-06-18
+- public/sw.js
+- src/app/actions/funds.ts
+- src/app/actions/giving.ts
+- src/app/actions/organizations.ts
+- src/app/actions/transactions.ts
+- src/app/api/reconcile/route.ts
+- src/app/dashboard/funds/FundForm.tsx
+- src/app/dashboard/giving/new/page.tsx
+- src/app/dashboard/page.tsx
+- src/app/dashboard/transactions/[id]/edit/EditTransactionForm.tsx
+- src/app/dashboard/transactions/[id]/edit/page.tsx
+- src/app/dashboard/transactions/import/page.tsx
+- src/app/dashboard/transactions/new/page.tsx
+- src/app/dashboard/transactions/page.tsx
+- src/app/demo/budget/page.tsx
+
+
 ### Changed
 - Ongoing: production hardening, performance, additional denomination presets
 
