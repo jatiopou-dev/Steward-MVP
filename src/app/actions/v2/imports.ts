@@ -19,6 +19,7 @@ import type {
   MemberRole,
 } from '@/lib/types/v2';
 import { createAuditLog } from './audit';
+import { checkPeriodLocked } from './reconciliation';
 
 const IMPORT_WRITE_ROLES: MemberRole[] = ['owner', 'admin', 'finance_manager'];
 const IMPORT_READ_ROLES: MemberRole[] = ['owner', 'admin', 'finance_manager', 'auditor'];
@@ -113,6 +114,18 @@ export async function importDonations(
   const rowResults: ImportRowResult[] = [];
 
   for (const row of rows) {
+    // Reject rows targeting a closed period
+    const locked = await checkPeriodLocked(organisation_id, row.transaction_date);
+    if (locked) {
+      error_count++;
+      rowResults.push({
+        source_reference: row.source_reference,
+        status: 'error',
+        error: `Period ${row.transaction_date.slice(0, 7)} is closed`,
+      });
+      continue;
+    }
+
     const appeal_id = row.appeal_code ? (appealByCode.get(row.appeal_code) ?? null) : null;
     const donor_id = row.donor_email ? (donorByEmail.get(row.donor_email) ?? null) : null;
 
