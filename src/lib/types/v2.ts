@@ -85,7 +85,7 @@ export interface BankAccount {
 
 // M3 Donation import types
 
-export type ImportSource = 'bank_csv' | 'stripe';
+export type ImportSource = 'bank_csv' | 'stripe' | 'crypto';
 export type ImportBatchStatus = 'processing' | 'complete' | 'failed';
 export type DonationStatus = 'imported' | 'matched' | 'reconciled';
 
@@ -214,4 +214,36 @@ export interface SubmitClaimResult {
   claim: GiftAidClaim;
   summary: ClaimSummary;
   csv: string;
+}
+
+// Web3 types
+
+export interface AnchorPayload {
+  steward_version: '1';
+  organisation_id: string;
+  period_id: string;
+  year: number;
+  month: number;
+  total_pence: number;
+  donation_count: number;
+  donation_ids: string[];
+  audit_log_ids: string[];
+  closed_by: string;
+  closed_at: string;
+  prev_anchor_tx_hash: string | null;
+}
+
+export interface ChainAnchor {
+  id: string;
+  organisation_id: string;
+  period_id: string;
+  chain: 'polygon' | 'base';
+  chain_id: number;
+  tx_hash: string;
+  block_number: number;
+  anchor_hash: string;
+  anchor_data: AnchorPayload;
+  prev_anchor_tx_hash: string | null;
+  anchored_at: string;
+  anchored_by: string | null;
 }

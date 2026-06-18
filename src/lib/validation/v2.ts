@@ -187,3 +187,18 @@ export type RevokeDeclarationInput = z.infer<typeof revokeDeclarationSchema>;
 export type ListDeclarationsInput = z.infer<typeof listDeclarationsSchema>;
 export type CreateClaimInput = z.infer<typeof createClaimSchema>;
 export type SubmitClaimInput = z.infer<typeof submitClaimSchema>;
+
+// Web3 schemas
+
+export const reanchorPeriodSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  period_id: z.string().uuid('Invalid period ID'),
+});
+
+export const getAnchorSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  period_id: z.string().uuid('Invalid period ID'),
+});
+
+export type ReanchorPeriodInput = z.infer<typeof reanchorPeriodSchema>;
+export type GetAnchorInput = z.infer<typeof getAnchorSchema>;
