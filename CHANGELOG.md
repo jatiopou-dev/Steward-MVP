@@ -4,6 +4,27 @@ All notable changes to Steward are documented here.
 
 ---
 
+## [M3] Donation Imports — 2026-06-18
+
+### Added
+- Migrations 014–015: `donation_import_batches` and `donations` tables with RLS
+- Column maps: `src/lib/importMaps/bankCsv.ts` — generic UK bank CSV parser
+- Column maps: `src/lib/importMaps/stripe.ts` — Stripe dashboard export parser
+- Server actions: `src/app/actions/v2/imports.ts` — createImportBatch, importDonations, listImportBatches, listDonations
+- Zod schemas: createImportBatchSchema, importDonationRowSchema, importDonationsSchema, listDonationsSchema
+- TypeScript types: DonationImportBatch, Donation, ImportRowResult, ImportBatchResult, ImportSource, ImportBatchStatus, DonationStatus
+- Unit tests for all M3 Zod schemas and column map pure functions (61 total tests passing)
+
+### Security
+- Donations inserted via admin client only — no client-side RLS insert policy on donations table
+- Duplicate prevention via DB unique constraint on (organisation_id, source, source_reference)
+- Raw CSV row preserved in raw_row jsonb — never mutated after insert
+- amount_pence integer only — no floats, no money stored as string
+- Audit log written on every completed import batch (action: import.completed)
+- Auditor role read-only; viewer excluded from all import/donation access
+
+---
+
 ## [M2] Finance Setup — 2026-06-18
 
 ### Added
