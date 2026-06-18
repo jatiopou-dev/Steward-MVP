@@ -163,13 +163,17 @@ export async function closePeriod(
 
   // Mark all donations in this period as reconciled
   if (donation_count > 0) {
-    await admin
+    const { error: reconcileError } = await admin
       .from('donations')
       .update({ status: 'reconciled' })
       .eq('organisation_id', organisation_id)
       .gte('transaction_date', `${year}-${String(month).padStart(2, '0')}-01`)
       .lte('transaction_date', lastDayOfMonth(year, month))
       .neq('status', 'reconciled');
+
+    if (reconcileError) {
+      return { error: `Period closed but failed to mark donations as reconciled: ${reconcileError.message}` };
+    }
   }
 
   await createAuditLog({
@@ -230,6 +234,6 @@ export async function listPeriods(
 
 // Returns the last day of the given month as YYYY-MM-DD
 function lastDayOfMonth(year: number, month: number): string {
-  const d = new Date(year, month, 0); // day 0 of next month = last day of this month
+  const d = new Date(Date.UTC(year, month, 0));
   return d.toISOString().split('T')[0];
 }
