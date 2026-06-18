@@ -135,3 +135,29 @@ export interface ImportBatchResult {
   error_count: number;
   rows: ImportRowResult[];
 }
+
+// M4 Reconciliation types
+
+export type PeriodStatus = 'open' | 'closed';
+
+export interface AppealSummary {
+  appeal_id: string;
+  appeal_code: string;
+  appeal_name: string;
+  count: number;
+  total_pence: number;
+}
+
+export interface ReconciliationPeriod {
+  id: string;
+  organisation_id: string;
+  year: number;
+  month: number;
+  status: PeriodStatus;
+  donation_count: number;
+  total_pence: number;
+  summary_by_appeal: AppealSummary[] | null;
+  closed_by: string | null;
+  closed_at: string | null;
+  created_at: string;
+}

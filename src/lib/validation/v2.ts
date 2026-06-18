@@ -128,3 +128,20 @@ export type CreateImportBatchInput = z.infer<typeof createImportBatchSchema>;
 export type ImportDonationRow = z.infer<typeof importDonationRowSchema>;
 export type ImportDonationsInput = z.infer<typeof importDonationsSchema>;
 export type ListDonationsInput = z.infer<typeof listDonationsSchema>;
+
+// M4 Reconciliation schemas
+
+export const closePeriodSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  year: z.number().int().min(2000, 'Year must be 2000 or later').max(2100, 'Year must be 2100 or earlier'),
+  month: z.number().int().min(1, 'Month must be 1–12').max(12, 'Month must be 1–12'),
+});
+
+export const getPeriodSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  year: z.number().int().min(2000).max(2100),
+  month: z.number().int().min(1).max(12),
+});
+
+export type ClosePeriodInput = z.infer<typeof closePeriodSchema>;
+export type GetPeriodInput = z.infer<typeof getPeriodSchema>;
