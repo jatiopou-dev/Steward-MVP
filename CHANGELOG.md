@@ -4,6 +4,30 @@ All notable changes to Steward are documented here.
 
 ---
 
+## [M5] — 2026-06-18 — Gift Aid
+
+### Added
+- `gift_aid_declarations` table with RLS (migration 017) — enduring, retro, single declaration types
+- `gift_aid_claims` table with RLS — draft/submitted status, period totals
+- `gift_aid_claim_donations` join table — links donations to claims with per-donation gift_aid_pence
+- `createDeclaration` server action — records donor Gift Aid declaration, verifies gift_aid_eligible
+- `revokeDeclaration` server action — sets revoked_at; declarations never hard-deleted
+- `listDeclarations` server action — filterable by donor, auditor read access
+- `createClaim` server action — finds all eligible donations in date range, skips already-submitted
+- `submitClaim` server action — marks claim submitted, generates Charities Online CSV + summary
+- `buildCharitiesOnlineCsv` pure function — HMRC bulk upload format (7-column CSV)
+- `isDeclarationActive` pure helper — exported for testing, checks coverage dates + revocation
+- Zod schemas: `createDeclarationSchema`, `revokeDeclarationSchema`, `listDeclarationsSchema`, `createClaimSchema`, `submitClaimSchema`
+- TypeScript types: `GiftAidDeclaration`, `GiftAidClaim`, `GiftAidClaimDonation`, `ClaimSummary`, `SubmitClaimResult`, `DeclarationType`, `ClaimStatus`
+
+### Rules
+- Gift Aid pence = ROUND(amount_pence × 25 / 100) per donation
+- Donor must have gift_aid_eligible = true AND an active declaration covering the donation date
+- Donations in submitted claims are excluded from new claims (draft claims do not block)
+- Declarations are revoked, never deleted — full audit trail for HMRC
+
+---
+
 ## [M4] — 2026-06-18 — Reconciliation
 
 ### Added
