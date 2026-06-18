@@ -161,3 +161,57 @@ export interface ReconciliationPeriod {
   closed_at: string | null;
   created_at: string;
 }
+
+// M5 Gift Aid types
+
+export type DeclarationType = 'enduring' | 'retro' | 'single';
+export type ClaimStatus = 'draft' | 'submitted';
+
+export interface GiftAidDeclaration {
+  id: string;
+  organisation_id: string;
+  donor_id: string;
+  declaration_type: DeclarationType;
+  effective_from: string;
+  effective_to: string | null;
+  signed_at: string;
+  signed_by_name: string;
+  revoked_at: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface GiftAidClaim {
+  id: string;
+  organisation_id: string;
+  claim_period_from: string;
+  claim_period_to: string;
+  total_donations_pence: number;
+  total_gift_aid_pence: number;
+  donation_count: number;
+  status: ClaimStatus;
+  submitted_at: string | null;
+  submitted_by: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface GiftAidClaimDonation {
+  claim_id: string;
+  donation_id: string;
+  declaration_id: string;
+  gift_aid_pence: number;
+}
+
+export interface ClaimSummary {
+  claim: GiftAidClaim;
+  donation_count: number;
+  total_donations_pence: number;
+  total_gift_aid_pence: number;
+}
+
+export interface SubmitClaimResult {
+  claim: GiftAidClaim;
+  summary: ClaimSummary;
+  csv: string;
+}

@@ -145,3 +145,45 @@ export const getPeriodSchema = z.object({
 
 export type ClosePeriodInput = z.infer<typeof closePeriodSchema>;
 export type GetPeriodInput = z.infer<typeof getPeriodSchema>;
+
+// M5 Gift Aid schemas
+
+export const createDeclarationSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  donor_id: z.string().uuid('Invalid donor ID'),
+  declaration_type: z.enum(['enduring', 'retro', 'single']),
+  effective_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
+  effective_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD').optional(),
+  signed_at: z.string().datetime('Must be ISO datetime'),
+  signed_by_name: z.string().min(1, 'Signed name required').max(200),
+});
+
+export const revokeDeclarationSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  declaration_id: z.string().uuid('Invalid declaration ID'),
+});
+
+export const listDeclarationsSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  donor_id: z.string().uuid('Invalid donor ID').optional(),
+});
+
+export const createClaimSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  claim_period_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
+  claim_period_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
+}).refine(
+  (d) => d.claim_period_from <= d.claim_period_to,
+  { message: 'claim_period_from must be on or before claim_period_to' }
+);
+
+export const submitClaimSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  claim_id: z.string().uuid('Invalid claim ID'),
+});
+
+export type CreateDeclarationInput = z.infer<typeof createDeclarationSchema>;
+export type RevokeDeclarationInput = z.infer<typeof revokeDeclarationSchema>;
+export type ListDeclarationsInput = z.infer<typeof listDeclarationsSchema>;
+export type CreateClaimInput = z.infer<typeof createClaimSchema>;
+export type SubmitClaimInput = z.infer<typeof submitClaimSchema>;
