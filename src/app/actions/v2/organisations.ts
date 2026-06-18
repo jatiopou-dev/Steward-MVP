@@ -12,7 +12,7 @@ export async function createOrganisation(
   // 1. Validate input
   const parsed = createOrganisationSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message };
+    return { error: parsed.error.issues[0].message };
   }
 
   // 2. Get authenticated user

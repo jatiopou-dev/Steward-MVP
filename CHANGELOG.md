@@ -4,6 +4,31 @@ All notable changes to Steward are documented here.
 
 ---
 
+## [M1] — 2026-06-18
+
+### Added
+- `organisations` table with hierarchical type support (denomination/network/conference/church/ministry)
+- `memberships` table with role enum (owner/admin/finance_manager/finance_assistant/viewer/auditor)
+- `audit_logs` table scoped to organisation
+- RLS helper functions: `is_org_member()` and `has_org_role()`
+- RLS policies on `profiles`, `organisations`, `memberships`, `audit_logs`
+- Service-role admin Supabase client (`src/utils/supabase/admin.ts`)
+- v2 server actions: `createOrganisation`, `getOrganisation`, `listUserOrganisations`
+- v2 server actions: `inviteUser`, `activateMembership`, `updateMemberRole`, `removeMember`, `listMembers`
+- Internal `createAuditLog` helper — writes on: org create, member invite, role change, member remove
+- Zod validation schemas for all v2 inputs
+- TypeScript types for Organisation, Membership, AuditLog
+- Vitest test framework with 11 passing validation unit tests
+
+### Security
+- All membership mutations verify caller role server-side before executing
+- RLS blocks cross-tenant reads at the database layer
+- Service-role key never exposed to client
+- Audit log inserts bypass RLS via service-role (no client-facing insert policy)
+- Owners cannot demote themselves or remove themselves
+
+---
+
 ## [Unreleased]
 
 ### Changed — 2026-06-18

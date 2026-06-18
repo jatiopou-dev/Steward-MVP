@@ -35,7 +35,7 @@ export async function inviteUser(
   input: InviteMemberInput
 ): Promise<ActionResult<Membership>> {
   const parsed = inviteMemberSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.errors[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const actorId = await requireRole(parsed.data.organisation_id, ['owner', 'admin']);
   if (!actorId) return { error: 'Permission denied: owner or admin required' };
@@ -107,14 +107,14 @@ export async function activateMembership(membershipId: string): Promise<ActionRe
     entity_id: membershipId,
   });
 
-  return {};
+  return { data: undefined as void };
 }
 
 export async function updateMemberRole(
   input: UpdateMemberRoleInput
 ): Promise<ActionResult> {
   const parsed = updateMemberRoleSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.errors[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const actorId = await requireRole(parsed.data.organisation_id, ['owner', 'admin']);
   if (!actorId) return { error: 'Permission denied: owner or admin required' };
@@ -154,14 +154,14 @@ export async function updateMemberRole(
     new_data: { role: parsed.data.role },
   });
 
-  return {};
+  return { data: undefined as void };
 }
 
 export async function removeMember(
   input: RemoveMemberInput
 ): Promise<ActionResult> {
   const parsed = removeMemberSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.errors[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const actorId = await requireRole(parsed.data.organisation_id, ['owner', 'admin']);
   if (!actorId) return { error: 'Permission denied: owner or admin required' };
@@ -194,7 +194,7 @@ export async function removeMember(
     previous_data: { role: current.role },
   });
 
-  return {};
+  return { data: undefined as void };
 }
 
 export async function listMembers(
