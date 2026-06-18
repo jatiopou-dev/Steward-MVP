@@ -82,3 +82,56 @@ export interface BankAccount {
   status: BankAccountStatus;
   created_at: string;
 }
+
+// M3 Donation import types
+
+export type ImportSource = 'bank_csv' | 'stripe';
+export type ImportBatchStatus = 'processing' | 'complete' | 'failed';
+export type DonationStatus = 'imported' | 'matched' | 'reconciled';
+
+export interface DonationImportBatch {
+  id: string;
+  organisation_id: string;
+  bank_account_id: string | null;
+  source: ImportSource;
+  filename: string;
+  row_count: number;
+  imported_count: number;
+  skipped_count: number;
+  error_count: number;
+  status: ImportBatchStatus;
+  raw_headers: Record<string, string> | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface Donation {
+  id: string;
+  organisation_id: string;
+  import_batch_id: string | null;
+  appeal_id: string | null;
+  donor_id: string | null;
+  source: ImportSource;
+  source_reference: string;
+  amount_pence: number;
+  currency: string;
+  transaction_date: string;
+  description: string | null;
+  raw_row: Record<string, unknown>;
+  status: DonationStatus;
+  created_at: string;
+}
+
+export interface ImportRowResult {
+  source_reference: string;
+  status: 'imported' | 'skipped' | 'error';
+  error?: string;
+}
+
+export interface ImportBatchResult {
+  batch_id: string;
+  imported_count: number;
+  skipped_count: number;
+  error_count: number;
+  rows: ImportRowResult[];
+}

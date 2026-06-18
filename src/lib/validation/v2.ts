@@ -85,3 +85,46 @@ export type CreateDonorInput = z.infer<typeof createDonorSchema>;
 export type UpdateDonorInput = z.infer<typeof updateDonorSchema>;
 export type CreateBankAccountInput = z.infer<typeof createBankAccountSchema>;
 export type UpdateBankAccountInput = z.infer<typeof updateBankAccountSchema>;
+
+// M3 Import schemas
+
+export const createImportBatchSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  source: z.enum(['bank_csv', 'stripe']),
+  filename: z.string().min(1, 'Filename required').max(255, 'Filename too long'),
+  bank_account_id: z.string().uuid('Invalid bank account ID').optional(),
+});
+
+export const importDonationRowSchema = z.object({
+  source_reference: z.string().min(1, 'Source reference required').max(255),
+  amount_pence: z.number().int('Amount must be an integer').positive('Amount must be positive'),
+  transaction_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
+  description: z.string().max(500).optional(),
+  appeal_code: z.string().max(50).optional(),
+  donor_email: z.string().email('Invalid donor email').optional(),
+  raw_row: z.record(z.string(), z.unknown()),
+});
+
+export const importDonationsSchema = z.object({
+  batch_id: z.string().uuid('Invalid batch ID'),
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  rows: z
+    .array(importDonationRowSchema)
+    .min(1, 'At least one row required')
+    .max(5000, 'Maximum 5000 rows per import'),
+});
+
+export const listDonationsSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  appeal_id: z.string().uuid('Invalid appeal ID').optional(),
+  batch_id: z.string().uuid('Invalid batch ID').optional(),
+  date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
+export type CreateImportBatchInput = z.infer<typeof createImportBatchSchema>;
+export type ImportDonationRow = z.infer<typeof importDonationRowSchema>;
+export type ImportDonationsInput = z.infer<typeof importDonationsSchema>;
+export type ListDonationsInput = z.infer<typeof listDonationsSchema>;
