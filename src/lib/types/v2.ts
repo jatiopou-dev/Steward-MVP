@@ -1,5 +1,6 @@
 export type OrgType = 'denomination' | 'network' | 'conference' | 'church' | 'ministry';
 export type OrgStatus = 'active' | 'archived' | 'suspended';
+// 'owner' is set only at org creation. inviteMemberSchema and updateMemberRoleSchema exclude it.
 export type MemberRole = 'owner' | 'admin' | 'finance_manager' | 'finance_assistant' | 'viewer' | 'auditor';
 export type MemberStatus = 'invited' | 'active' | 'disabled';
 
@@ -38,7 +39,6 @@ export interface AuditLog {
   created_at: string;
 }
 
-export interface ActionResult<T = void> {
-  data?: T;
-  error?: string;
-}
+export type ActionResult<T = void> =
+  | { data: T; error?: never }
+  | { error: string; data?: never };

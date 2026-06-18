@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS memberships (
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('invited','active','disabled')),
   invited_by UUID REFERENCES auth.users(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (user_id, organisation_id)
+  constraint unique_user_org unique (user_id, organisation_id)
 );
 
 -- Indexes for fast lookups
