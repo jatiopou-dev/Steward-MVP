@@ -4,6 +4,26 @@ All notable changes to Steward are documented here.
 
 ---
 
+## [M4] — 2026-06-18 — Reconciliation
+
+### Added
+- `reconciliation_periods` table with RLS (migration 016)
+- `closePeriod` server action — closes a calendar month, aggregates donation totals + appeal breakdown, marks donations as `reconciled`
+- `getPeriod` / `listPeriods` server actions — read period state (finance_manager + auditor)
+- `checkPeriodLocked` internal helper — returns true if a date falls in a closed period
+- Period lock enforcement in `importDonations` — rows targeting closed periods return `error` status with message `"Period YYYY-MM is closed"`
+- Audit log entry on every period close: `reconciliation.period_closed`
+- Zod schemas: `closePeriodSchema`, `getPeriodSchema`
+- TypeScript types: `ReconciliationPeriod`, `AppealSummary`, `PeriodStatus`
+
+### Rules
+- Closed months are immutable — no donations can be imported into a closed period
+- Empty months can be closed (donation_count=0 is valid)
+- Closing an already-closed month returns an error
+- Only owner/admin/finance_manager can close periods; auditor read-only
+
+---
+
 ## [M3] Donation Imports — 2026-06-18
 
 ### Added
