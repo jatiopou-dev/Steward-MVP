@@ -42,3 +42,43 @@ export interface AuditLog {
 export type ActionResult<T = void> =
   | { data: T; error?: never }
   | { error: string; data?: never };
+
+// M2 Finance types
+
+export type AppealStatus = 'active' | 'archived';
+export type DonorStatus = 'active' | 'archived';
+export type BankAccountStatus = 'active' | 'archived';
+
+export interface Appeal {
+  id: string;
+  organisation_id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  external_account_code: string | null;
+  status: AppealStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Donor {
+  id: string;
+  organisation_id: string;
+  display_name: string;
+  email: string | null;
+  external_reference: string | null;
+  gift_aid_eligible: boolean;
+  status: DonorStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BankAccount {
+  id: string;
+  organisation_id: string;
+  name: string;
+  account_last4: string | null;
+  currency: string;
+  status: BankAccountStatus;
+  created_at: string;
+}
