@@ -1,43 +1,155 @@
 "use client";
 import React from "react";
 import Topbar from "@/components/dashboard/Topbar";
+import { useDemoState } from "@/contexts/DemoStateContext";
+
+const REPORT_DATE = "April 2026";
+const CHURCH_NAME = "Grace Baptist Church";
 
 export default function DemoReports() {
-  const reports = [
-    { icon: "📄", title: "April Treasurer Report", desc: "Monthly income & expenditure summary", date: "27 Apr 2026", status: "Ready", statusCls: "chip-sage" },
-    { icon: "📊", title: "Q1 Board Summary", desc: "Jan–Mar 2026 consolidated report", date: "03 Apr 2026", status: "Ready", statusCls: "chip-sage" },
-    { icon: "🏛️", title: "Gift Aid R68(i) Claim", desc: "HMRC submission — £17,100 reclaim", date: "05 Apr 2026", status: "Pending review", statusCls: "chip-gold" },
-    { icon: "💼", title: "Annual Payroll Summary", desc: "Tax year 2025/26 P60 preparation", date: "05 Apr 2026", status: "Draft", statusCls: "chip-stone" },
-    { icon: "📈", title: "Year-End Financial Accounts", desc: "Draft accounts for charity trustees", date: "In progress", status: "In progress", statusCls: "chip-stone" },
-  ];
+  const { state } = useDemoState();
+
+  const incomeRows = state.transactions.filter(t => t.pence > 0);
+  const expRows = state.transactions.filter(t => t.pence < 0);
+
+  const groupBy = (txs: typeof incomeRows) => {
+    const map: Record<string, number> = {};
+    txs.forEach(t => {
+      const cat = t.meta.split(" · ")[0];
+      map[cat] = (map[cat] || 0) + t.pence;
+    });
+    return Object.entries(map).map(([cat, amount]) => ({ cat, amount }));
+  };
+
+  const incomeGroups = groupBy(incomeRows);
+  const expGroups = groupBy(expRows);
+  const totalIncome = incomeRows.reduce((s, t) => s + t.pence, 0);
+  const totalExp = expRows.reduce((s, t) => s + t.pence, 0);
+  const surplus = totalIncome + totalExp;
+
+  const fmt = (pence: number) =>
+    `£${(Math.abs(pence) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <>
-      <Topbar title="Reports" subtitle="AI-generated financial reports · HMRC ready" actions={<button className="btn btn-forest btn-sm">+ Generate report</button>} />
-      <div className="content">
-        <div className="card">
-          <div className="card-head"><div className="card-title">Report library</div></div>
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          .print-area { display: block !important; }
+          body { background: white; }
+        }
+        .print-area { display: none; }
+      `}</style>
+
+      <div className="no-print">
+        <Topbar
+          title="Reports"
+          subtitle="AI-generated financial reports · HMRC ready"
+          actions={<button className="btn btn-forest btn-sm" onClick={handlePrint}>⬇ Download / Print</button>}
+        />
+      </div>
+
+      <div className="content no-print">
+        <div className="card" style={{ marginBottom: "1rem" }}>
+          <div className="card-head"><div className="card-title">Available reports</div></div>
           <table className="tbl">
-            <thead><tr><th>Report</th><th>Description</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Report</th><th>Period</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>
-              {reports.map((r, i) => (
-                <tr key={i}>
-                  <td><span style={{ fontSize: "1.2rem", marginRight: 8 }}>{r.icon}</span><strong>{r.title}</strong></td>
-                  <td style={{ color: "var(--fg-muted)", fontSize: "0.9rem" }}>{r.desc}</td>
-                  <td style={{ whiteSpace: "nowrap", fontSize: "0.9rem" }}>{r.date}</td>
-                  <td><div className={`chip ${r.statusCls}`}>{r.status}</div></td>
-                  <td><button className="btn btn-outline btn-sm">⬇ Download</button></td>
-                </tr>
-              ))}
+              <tr>
+                <td><strong>Income & Expenditure</strong></td>
+                <td>{REPORT_DATE}</td>
+                <td><div className="chip chip-sage">Ready</div></td>
+                <td><button className="btn btn-outline btn-sm" onClick={handlePrint}>⬇ Download</button></td>
+              </tr>
+              <tr>
+                <td><strong>Gift Aid R68(i) claim</strong></td>
+                <td>Tax year 2025–26</td>
+                <td><div className="chip chip-sage">Ready</div></td>
+                <td><button className="btn btn-outline btn-sm" onClick={() => alert("In the full Steward this generates an HMRC-ready R68(i) XML file.")}>⬇ Download</button></td>
+              </tr>
+              <tr>
+                <td><strong>Annual fund summary</strong></td>
+                <td>Apr 2025 – Mar 2026</td>
+                <td><div className="chip chip-stone">Generating…</div></td>
+                <td><button className="btn btn-outline btn-sm" disabled>⬇ Download</button></td>
+              </tr>
             </tbody>
           </table>
         </div>
-        <div className="ai-card" style={{ marginTop: "1.5rem" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: ".9rem" }}>
-            <div className="serif" style={{ color: "var(--cream)", fontSize: ".95rem", fontWeight: 600 }}>AI Report Writer</div>
-            <div className="ai-badge">✨ Powered by Claude</div>
+
+        <div className="card">
+          <div className="card-head">
+            <div>
+              <div className="card-title">Income & Expenditure — {REPORT_DATE}</div>
+              <div className="card-sub">{CHURCH_NAME} · Generated by Steward AI</div>
+            </div>
+            <button className="btn btn-outline btn-sm" onClick={handlePrint}>Print →</button>
           </div>
-          <div className="ai-insight">📄 Ask me to write a report in plain English: <em>"Write a treasurer's report for April"</em> or <em>"Prepare the HMRC Gift Aid claim for 2025/26."</em></div>
-          <button className="btn btn-gold btn-sm" style={{ marginTop: "1rem" }}>Open AI Report Writer →</button>
+
+          <table className="tbl" style={{ marginTop: "0.5rem" }}>
+            <thead><tr><th>Income</th><th style={{ textAlign: "right" }}>Amount</th></tr></thead>
+            <tbody>
+              {incomeGroups.map(r => (
+                <tr key={r.cat}><td>{r.cat}</td><td style={{ textAlign: "right" }}>{fmt(r.amount)}</td></tr>
+              ))}
+              <tr style={{ fontWeight: 700, borderTop: "2px solid var(--border)" }}>
+                <td>Total Income</td><td style={{ textAlign: "right", color: "var(--sage)" }}>{fmt(totalIncome)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <table className="tbl" style={{ marginTop: "1.5rem" }}>
+            <thead><tr><th>Expenditure</th><th style={{ textAlign: "right" }}>Amount</th></tr></thead>
+            <tbody>
+              {expGroups.map(r => (
+                <tr key={r.cat}><td>{r.cat}</td><td style={{ textAlign: "right" }}>{fmt(r.amount)}</td></tr>
+              ))}
+              <tr style={{ fontWeight: 700, borderTop: "2px solid var(--border)" }}>
+                <td>Total Expenditure</td><td style={{ textAlign: "right", color: "var(--rust)" }}>{fmt(Math.abs(totalExp))}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style={{ marginTop: "1.5rem", padding: "1rem", background: surplus >= 0 ? "var(--sage-bg)" : "var(--rust-bg)", borderRadius: "8px", display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
+            <span>Net {surplus >= 0 ? "Surplus" : "Deficit"}</span>
+            <span style={{ color: surplus >= 0 ? "var(--sage)" : "var(--rust)" }}>{surplus >= 0 ? "" : "-"}{fmt(surplus)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Print-only full report */}
+      <div className="print-area" style={{ padding: "2rem", fontFamily: "Georgia, serif", color: "#000" }}>
+        <h1 style={{ fontSize: "1.4rem", marginBottom: "0.25rem" }}>{CHURCH_NAME}</h1>
+        <h2 style={{ fontSize: "1rem", fontWeight: "normal", marginBottom: "1.5rem" }}>Income & Expenditure Statement — {REPORT_DATE}</h2>
+        <p style={{ fontSize: "0.85rem", marginBottom: "1.5rem" }}>Generated by Steward · {new Date().toLocaleDateString("en-GB")}</p>
+
+        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "1.5rem" }}>
+          <thead><tr style={{ borderBottom: "2px solid #000" }}><th style={{ textAlign: "left", paddingBottom: "0.4rem" }}>Income</th><th style={{ textAlign: "right", paddingBottom: "0.4rem" }}>Amount</th></tr></thead>
+          <tbody>
+            {incomeGroups.map(r => (
+              <tr key={r.cat} style={{ borderBottom: "1px solid #eee" }}><td style={{ padding: "0.35rem 0" }}>{r.cat}</td><td style={{ textAlign: "right" }}>{fmt(r.amount)}</td></tr>
+            ))}
+            <tr style={{ borderTop: "2px solid #000", fontWeight: 700 }}><td style={{ padding: "0.5rem 0" }}>Total Income</td><td style={{ textAlign: "right" }}>{fmt(totalIncome)}</td></tr>
+          </tbody>
+        </table>
+
+        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "1.5rem" }}>
+          <thead><tr style={{ borderBottom: "2px solid #000" }}><th style={{ textAlign: "left", paddingBottom: "0.4rem" }}>Expenditure</th><th style={{ textAlign: "right", paddingBottom: "0.4rem" }}>Amount</th></tr></thead>
+          <tbody>
+            {expGroups.map(r => (
+              <tr key={r.cat} style={{ borderBottom: "1px solid #eee" }}><td style={{ padding: "0.35rem 0" }}>{r.cat}</td><td style={{ textAlign: "right" }}>{fmt(Math.abs(r.amount))}</td></tr>
+            ))}
+            <tr style={{ borderTop: "2px solid #000", fontWeight: 700 }}><td style={{ padding: "0.5rem 0" }}>Total Expenditure</td><td style={{ textAlign: "right" }}>{fmt(Math.abs(totalExp))}</td></tr>
+          </tbody>
+        </table>
+
+        <div style={{ borderTop: "3px double #000", padding: "0.75rem 0", display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: "1.1rem" }}>
+          <span>Net {surplus >= 0 ? "Surplus" : "Deficit"}</span>
+          <span>{surplus >= 0 ? "" : "-"}{fmt(surplus)}</span>
         </div>
       </div>
     </>
