@@ -4,6 +4,77 @@ All notable changes to Steward are documented here.
 
 ---
 
+## [Web3] — 2026-06-19 — Crypto donations + Blockchain audit anchoring
+
+### Sub-system 1: Crypto donations (The Giving Block)
+
+#### Database (migration 018)
+- `donation_import_batches.source` and `donations.source` check constraints extended: adds `'crypto'`
+- `createImportBatchSchema` in `src/lib/validation/v2.ts` extended to include `'crypto'`
+
+#### Column map (`src/lib/importMaps/theGivingBlock.ts`)
+- Maps The Giving Block settlement CSV → `ImportDonationRow`
+- `Settlement Date` → `transaction_date` (YYYY-MM-DD; DD/MM/YYYY fallback handled)
+- `Settlement Amount (GBP)` → `amount_pence` (× 100, integer, strips £ and commas)
+- `Transaction ID` → `source_reference` (unique; prevents duplicate imports via existing constraint)
+- Donor name included in `description`; crypto details preserved in `raw_row` jsonb only
+- Returns `null` for missing Transaction ID, zero/negative amount, or unparseable date
+- Plugs into existing `importDonations` server action with zero changes to core logic
+- Gift Aid cannot be claimed on crypto — enforced by existing M5 donor `gift_aid_eligible` flag
+
+#### TypeScript
+- `ImportSource` extended: `'bank_csv' | 'stripe' | 'crypto'`
+
+---
+
+### Sub-system 2: Blockchain audit anchoring (Polygon / Base)
+
+#### Database (migration 018)
+- `reconciliation_periods.anchor_tx_hash text` — nullable; populated on successful anchor
+- `chain_anchors` table: `chain` ('polygon' | 'base'), `chain_id`, `tx_hash`, `block_number` bigint, `anchor_hash`, `anchor_data` jsonb, `prev_anchor_tx_hash`, `anchored_by`
+- RLS: SELECT for any org member; no client-facing INSERT/UPDATE/DELETE
+
+#### Shared utility (`src/lib/utils/date.ts`)
+- `lastDayOfMonth(year, month)` extracted from reconciliation.ts to shared util (avoided circular dep with chainAnchors.ts)
+
+#### Pure helpers (`src/lib/blockchain/anchor.ts`)
+- `buildAnchorPayload(params)` — deterministic `AnchorPayload`; sorts `donation_ids` and `audit_log_ids` ascending
+- `hashAnchorPayload(payload)` — SHA-256 of `JSON.stringify(payload)`, returns 64-char hex
+- `submitAnchorTx(hash)` — zero-value tx to burn address on Polygon/Base via viem; 1-block confirmation; returns `tx_hash` + `block_number`
+- Config via env: `ANCHOR_CHAIN`, `ANCHOR_CHAIN_ID`, `ANCHOR_RPC_URL`, `ANCHOR_WALLET_PRIVATE_KEY`, `ANCHOR_BURN_ADDRESS`
+
+#### Server actions (`src/app/actions/v2/chainAnchors.ts`)
+- `anchorPeriod(period, actorId)` — internal; fire-and-log: failure writes `chain_anchor.failed` audit log but **never blocks period close**
+- `reanchorPeriod(input)` — finance_manager+; retries failed anchor; errors if already anchored
+- `getAnchor(input)` — any org member; returns anchor or null
+
+#### Reconciliation integration
+- `closePeriod` calls `void anchorPeriod(period, actorId)` after successful period write
+
+#### Public verification (`src/app/api/verify/[orgId]/[year]/[month]/route.ts`)
+- `GET /api/verify/:orgId/:year/:month` — no auth required
+- Re-hashes stored `anchor_data`, compares to stored `anchor_hash`, returns `verified` boolean
+- Returns `explorer_url` pointing to Polygonscan or Basescan
+
+#### TypeScript types (`src/lib/types/v2.ts`)
+- `AnchorPayload` — canonical hashable payload
+- `ChainAnchor` — full `chain_anchors` row type
+
+#### Validation (`src/lib/validation/v2.ts`)
+- `reanchorPeriodSchema`, `getAnchorSchema`, `ReanchorPeriodInput`, `GetAnchorInput`
+
+#### Tests (`src/__tests__/v2/web3.test.ts`)
+- 26 new tests: Zod schemas, The Giving Block column map, `buildAnchorPayload` determinism, `hashAnchorPayload` SHA-256
+- Total: 130 tests passing across 7 test files
+
+#### Security
+- `ANCHOR_WALLET_PRIVATE_KEY` server-side only — never in client bundle or logs
+- Platform wallet holds only enough MATIC/ETH for ~6 months of txs
+- Anchor failure never blocks period close — financial integrity preserved
+- `anchor_data` jsonb contains only IDs and aggregates — no PII
+
+---
+
 ## [M5] — 2026-06-18 — Gift Aid (backend pipeline)
 
 ### Database (migration 017)
