@@ -90,7 +90,7 @@ export type UpdateBankAccountInput = z.infer<typeof updateBankAccountSchema>;
 
 export const createImportBatchSchema = z.object({
   organisation_id: z.string().uuid('Invalid organisation ID'),
-  source: z.enum(['bank_csv', 'stripe']),
+  source: z.enum(['bank_csv', 'stripe', 'crypto']),
   filename: z.string().min(1, 'Filename required').max(255, 'Filename too long'),
   bank_account_id: z.string().uuid('Invalid bank account ID').optional(),
 });
