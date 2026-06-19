@@ -15,6 +15,8 @@ import type {
   MemberRole,
 } from '@/lib/types/v2';
 import { createAuditLog } from './audit';
+import { anchorPeriod } from './chainAnchors';
+import { lastDayOfMonth } from '@/lib/utils/date';
 
 const RECON_WRITE_ROLES: MemberRole[] = ['owner', 'admin', 'finance_manager'];
 const RECON_READ_ROLES: MemberRole[] = ['owner', 'admin', 'finance_manager', 'auditor'];
@@ -185,6 +187,9 @@ export async function closePeriod(
     new_data: { year, month, donation_count, total_pence },
   });
 
+  // Fire-and-log — never blocks period close on failure
+  void anchorPeriod(period, actorId);
+
   return { data: period };
 }
 
@@ -230,10 +235,4 @@ export async function listPeriods(
 
   if (error) return { error: error.message };
   return { data: data ?? [] };
-}
-
-// Returns the last day of the given month as YYYY-MM-DD
-function lastDayOfMonth(year: number, month: number): string {
-  const d = new Date(Date.UTC(year, month, 0));
-  return d.toISOString().split('T')[0];
 }
