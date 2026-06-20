@@ -39,10 +39,31 @@
 }
 
 @theme inline {
+  /* Base */
   --color-background: var(--parchment);
   --color-foreground: var(--ink);
   --font-sans: var(--font-dm-sans);
   --font-serif: var(--font-cormorant);
+
+  /* shadcn/ui tokens — mapped to Steward palette */
+  --color-card: var(--cream);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--cream);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--forest);
+  --color-primary-foreground: var(--cream);
+  --color-secondary: var(--parchment2);
+  --color-secondary-foreground: var(--ink2);
+  --color-muted: var(--parchment2);
+  --color-muted-foreground: var(--stone);
+  --color-accent: var(--parchment2);
+  --color-accent-foreground: var(--forest);
+  --color-destructive: var(--rust);
+  --color-destructive-foreground: var(--cream);
+  --color-border: var(--stone3);
+  --color-input: var(--stone3);
+  --color-ring: var(--sage);
+  --radius: 0.5rem;
 }
 
 * {

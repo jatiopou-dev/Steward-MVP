@@ -157,6 +157,7 @@ export interface ReconciliationPeriod {
   donation_count: number;
   total_pence: number;
   summary_by_appeal: AppealSummary[] | null;
+  anchor_tx_hash: string | null;
   closed_by: string | null;
   closed_at: string | null;
   created_at: string;

@@ -4,6 +4,135 @@ All notable changes to Steward are documented here.
 
 ---
 
+## [UI-v2] — 2026-06-20 — Design system upgrade + v2 Finance dashboard pages
+
+### Design system
+
+#### shadcn/ui integration (`src/components/ui/`)
+- `npx shadcn@4.10.0` added 12 component files: `button`, `card`, `badge`, `table`, `dialog`, `input`, `select`, `tabs`, `progress`, `label`, `textarea`, `form`
+- Installed peer packages: `clsx`, `tailwind-merge`, `class-variance-authority`, `lucide-react`
+- Added `src/lib/utils.ts` — `cn()` helper (clsx + tailwind-merge)
+- Added `components.json` — shadcn config targeting `src/app/globals.css`, Tailwind v4, RSC enabled
+
+#### CSS token mapping (`src/app/globals.css`)
+- Extended `@theme inline` block with shadcn semantic tokens mapped to Steward's violet/purple palette:
+  - `--color-primary` → `var(--forest)` (#3B0764); `--color-primary-foreground` → `var(--cream)`
+  - `--color-card` / `--color-popover` → `var(--cream)` (#FDFCFF)
+  - `--color-secondary` / `--color-muted` / `--color-accent` → `var(--parchment2)` (#EDE9FE)
+  - `--color-destructive` → `var(--rust)` (#DC2626)
+  - `--color-border` / `--color-input` → `var(--stone3)` (#DDD6FE)
+  - `--color-ring` → `var(--sage)` (#7C3AED)
+- All existing Steward custom classes (`.btn-forest`, `.kpi`, `.card`, `.tx-*`, `.chip-*`, etc.) preserved unchanged
+- shadcn components layer on top of — not replacing — the existing design system
+
+#### Sidebar navigation (`src/components/dashboard/Sidebar.tsx`)
+- Added **Finance** nav section above Treasury with 5 new links:
+  - 📥 Donation imports → `/dashboard/donations/import`
+  - 🔒 Reconciliation → `/dashboard/reconciliation`
+  - 🎁 Gift Aid → `/dashboard/gift-aid`
+  - 👤 Donors → `/dashboard/donors`
+  - 📣 Appeals → `/dashboard/appeals`
+- Treasury and Church sections unchanged; Giving icon updated to 💰
+
+#### TypeScript (`src/lib/types/v2.ts`)
+- `ReconciliationPeriod` interface updated to include `anchor_tx_hash: string | null` — aligns with migration 018 column added in [Web3]
+
+---
+
+### Feature pages
+
+#### 1. Donation Import (`src/app/dashboard/donations/import/`)
+
+**`page.tsx`** — Server component
+- Fetches `organisation_id` from active membership; redirects to `/auth` or `/onboarding` as needed
+- Passes org ID to `DonationImportClient`
+
+**`DonationImportClient.tsx`** — Client component
+- **Source selector**: Three-card picker for `bank_csv`, `stripe`, `crypto` (The Giving Block) — each shows icon, label, description, and CSV format hint
+- **Drop zone**: Drag-and-drop or click-to-browse CSV upload with drag-active highlight state
+- **CSV parsing**: `papaparse` header-mode; dispatches to existing column maps (`mapBankCsvRow`, `mapStripeRow`, `mapTheGivingBlockRow`) client-side before any network call
+- **Preview panel** (shown after parsing):
+  - 3-stat summary: donations to import / total value / skipped rows
+  - Tabbed table: "To import" (date, reference, description, amount) + "Skipped" tab if any rows were rejected by the column map
+  - Shows first 50 rows; "Showing first 50 of N" notice for large files
+- **Import flow**:
+  1. Calls `createImportBatch` server action (creates batch row, returns `batch_id`)
+  2. Calls `importDonations` with all valid mapped rows and `batch_id`
+  3. Progress bar animates during import
+- **Results panel**: success / duplicate / error counts with expandable error table (reference + reason per failed row)
+- **Period lock**: Rows targeting a closed month are rejected server-side with a per-row error message
+- No re-import of duplicates — `source_reference` unique constraint returns `duplicate` status silently
+
+---
+
+#### 2. Reconciliation (`src/app/dashboard/reconciliation/`)
+
+**`page.tsx`** — Server component
+- Fetches active membership, calls `listPeriods` server action, renders initial period list server-side for fast paint
+
+**`ReconciliationClient.tsx`** — Client component
+- **KPI row**: Periods closed / last closed period / total reconciled (£) / total donations locked
+- **Close period form** (left card):
+  - Year (current year − 4) + month dropdowns pre-filled to current month
+  - Warning state if selected month already closed
+  - Explanatory callout: what happens on close (lock donations, block imports, blockchain anchor, freeze stats)
+  - `closePeriod` server action called via `useTransition`; success confirms with anchor tx submitted
+- **Period history** (right card):
+  - Collapsible rows — click to expand per-appeal breakdown (`summary_by_appeal` jsonb)
+  - Appeal breakdown shows: appeal code (monospace chip), appeal name, donation count, total (£)
+  - Blockchain anchor hash shown at bottom of expanded row (dark `--ink` background, `--sage3` text)
+  - Empty state with calendar icon if no periods closed yet
+- Optimistic UI: newly closed period prepended to list immediately without page refresh
+
+---
+
+#### 3. Gift Aid (`src/app/dashboard/gift-aid/`)
+
+**`page.tsx`** — Server component
+- Parallel fetches: `listDeclarations` server action + direct Supabase query for `gift_aid_claims` + eligible donor count
+- All data passed as props to avoid waterfall
+
+**`GiftAidClient.tsx`** — Client component
+- **KPI row**: Active declarations / claims submitted (+ draft count) / total Gift Aid claimed (£) / rate (25%)
+- **Tabs**: Claims | Declarations
+
+**Claims tab**:
+- *Create claim form* (left card):
+  - From / To date pickers pre-filled to last 3 months
+  - Explanatory rules callout: eligible donors only, submitted claims excluded, draft review before HMRC
+  - Calls `createClaim` server action; shows inline result card with donation count and Gift Aid value; success prompts user to submit from the list
+- *Claim history* (right card):
+  - Each claim shows: date range, draft/submitted badge (with icon), donation count, Gift Aid value, total donations, submission date
+  - Draft claims have a "Submit + download CSV" button that:
+    1. Calls `submitClaim` server action (marks claim submitted, generates HMRC CSV)
+    2. Triggers browser download of `steward-gift-aid-<from>-to-<to>.csv`
+  - Submitted claims show green badge + submitted date (immutable)
+  - Post-submit result banner: donation count, donations total, Gift Aid claimable, with reminder to upload CSV to HMRC Charities Online portal
+
+**Declarations tab**:
+- Table: donor ID (truncated monospace), declaration type (enduring/retro/single chip), effective from, effective to (or "Open-ended"), signed by, active/revoked status
+- Empty state directs user to Donors section for declaration management
+- Revoked declarations remain visible in table with rust `Revoked` chip (HMRC audit trail preserved)
+
+---
+
+### Security notes
+- All mutations (`createImportBatch`, `importDonations`, `closePeriod`, `createClaim`, `submitClaim`) are server actions with server-side role checks — no client-side permission enforcement
+- Org ID sourced from server-fetched active membership — cannot be spoofed via prop
+- CSV download is a pure client-side Blob — no data uploaded to third-party services
+- `anchor_tx_hash` shown read-only — no client-facing anchor mutation
+
+### Tests
+- No new tests added in this UI milestone (UI components tested manually)
+- All existing 130 backend tests remain passing
+
+### Open risks / next steps
+- `/dashboard/donors` and `/dashboard/appeals` nav links are stubs — pages not yet built
+- Gift Aid declaration creation UI not yet built (currently API/action only)
+- `listClaims` server action not yet extracted — gift-aid page queries `gift_aid_claims` table directly
+
+---
+
 ## [Web3] — 2026-06-19 — Crypto donations + Blockchain audit anchoring
 
 ### Sub-system 1: Crypto donations (The Giving Block)
