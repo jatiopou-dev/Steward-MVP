@@ -4,6 +4,36 @@ All notable changes to Steward are documented here.
 
 ---
 
+## [Landing-Web3] — 2026-06-20 — Web3 showcase on landing page
+
+### Hero section (`src/app/page.tsx`)
+- Subtitle updated: now closes with *"…and the first church finance platform with a blockchain-anchored audit trail"*
+
+### Features bento grid
+- New full-width (3-column span) **Web3 card** added at the bottom of the bento grid:
+  - **Left column**: explains blockchain period anchoring — every closed financial period hashed and written to Polygon/Base; tamper-proof and publicly verifiable
+  - **Centre column**: two live-look panels — SHA-256 hash with block number + Polygon confirmation; crypto donation import description via The Giving Block
+  - **Right column**: 4 feature bullets — Polygon/Base anchoring, public verification URL, The Giving Block CSV import, audit-grade hash integrity
+  - Styled dark ink/indigo background with sage-purple accent to distinguish from standard bento cards
+
+### Comparison table (`#compare`)
+- New **Web3 section divider row** spanning all columns — dark ink background, `⛓️ Web3 — Industry-first features` label + `Steward exclusive` badge
+- **4 new comparison rows** (all `✅ Steward` / `❌ ACMS` / `❌ ChurchPal 4`):
+  - Blockchain audit trail — Polygon / Base anchor per period
+  - Tamper-proof period hashing — SHA-256 · publicly verifiable
+  - Public audit verification URL — `/api/verify/:org/:year/:month`
+  - Crypto donation imports — The Giving Block CSV (GBP-settled)
+- Web3 rows use `var(--sage)` text in the Steward column to visually distinguish from standard rows
+- Compare footnote updated to June 2026 and adds: *"Web3 features are exclusive to Steward — blockchain anchoring uses zero-value transactions to Polygon or Base mainnet"*
+
+### Reassurance strip
+- Added fifth item: `⛓️ Blockchain audit trail / Every period anchored on-chain`
+
+### Commit
+- `43de764` — feat(landing): showcase Web3 features in compare table + features bento
+
+---
+
 ## [UI-v2] — 2026-06-20 — Design system upgrade + v2 Finance dashboard pages
 
 ### Design system
