@@ -44,7 +44,8 @@ export default function LandingPage() {
             <p className="land-hero-sub">
               Steward gives every volunteer treasurer the tools they deserve —
               clear fund accounts, AI-powered bookkeeping, Gift Aid, and
-              one-click reports. No accounting degree required.
+              one-click reports. And the first church finance platform with a
+              blockchain-anchored audit trail.
             </p>
 
             <div className="land-hero-cta">
@@ -242,6 +243,62 @@ export default function LandingPage() {
               <h3>Works offline</h3>
               <p>Full PWA — record Sunday offerings and manage transactions even without Wi-Fi. Syncs automatically when you reconnect.</p>
             </div>
+
+            {/* Web3 / Blockchain card — spans full width */}
+            <div className="land-bento-card" style={{
+              gridColumn: "span 3",
+              background: "linear-gradient(135deg, var(--ink) 0%, var(--ink2) 100%)",
+              border: "1px solid rgba(167,139,250,0.2)",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr",
+              gap: "2rem",
+              alignItems: "center",
+            }}>
+              <div>
+                <div className="land-bento-tag" style={{ background: "rgba(167,139,250,0.15)", color: "var(--sage2)", marginBottom: ".9rem" }}>
+                  Web3 — Industry first
+                </div>
+                <div style={{ fontSize: "2rem", marginBottom: ".7rem" }}>⛓️</div>
+                <h3 style={{ color: "var(--cream)", marginBottom: ".5rem" }}>Blockchain-anchored audit trail</h3>
+                <p style={{ color: "rgba(255,255,255,.55)", fontSize: ".84rem", lineHeight: 1.65 }}>
+                  Every closed financial period is hashed and anchored to the Polygon or Base blockchain — creating a tamper-proof, publicly verifiable record that no one can alter, not even us.
+                </p>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div style={{ background: "rgba(255,255,255,.06)", borderRadius: 10, padding: "1rem", border: "1px solid rgba(167,139,250,.15)" }}>
+                  <div style={{ fontSize: ".65rem", fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--sage2)", marginBottom: ".4rem" }}>Period closed</div>
+                  <div style={{ fontFamily: "monospace", fontSize: ".72rem", color: "rgba(255,255,255,.6)", wordBreak: "break-all" }}>
+                    <span style={{ color: "var(--sage3)" }}>sha256:</span> 3a7f9c2d…e48b1
+                  </div>
+                  <div style={{ marginTop: ".5rem", display: "flex", alignItems: "center", gap: ".5rem" }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--sage2)", animation: "pulse 2s infinite" }}></div>
+                    <span style={{ fontSize: ".72rem", color: "rgba(255,255,255,.45)" }}>Anchored · Polygon · block 58,204,471</span>
+                  </div>
+                </div>
+                <div style={{ background: "rgba(255,255,255,.06)", borderRadius: 10, padding: "1rem", border: "1px solid rgba(167,139,250,.15)" }}>
+                  <div style={{ fontSize: ".65rem", fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--gold2)", marginBottom: ".4rem" }}>Crypto donations</div>
+                  <div style={{ fontSize: ".8rem", color: "rgba(255,255,255,.7)" }}>
+                    Accept Bitcoin, Ethereum &amp; more via The Giving Block. Auto-imported as GBP-settled donations.
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: ".75rem" }}>
+                {[
+                  { icon: "🔗", title: "Polygon / Base anchoring", desc: "Each period close writes a zero-value tx to the blockchain" },
+                  { icon: "🔍", title: "Public verification URL", desc: "/api/verify/:orgId/:year/:month — anyone can confirm the hash" },
+                  { icon: "₿", title: "The Giving Block import", desc: "Settlement CSV maps directly to donation records + Gift Aid rules apply" },
+                  { icon: "🛡️", title: "Audit-grade integrity", desc: "Hash covers all donation IDs, totals, and appeal breakdowns" },
+                ].map((item, i) => (
+                  <div key={i} style={{ display: "flex", gap: ".75rem", alignItems: "flex-start" }}>
+                    <span style={{ fontSize: "1rem", flexShrink: 0, marginTop: ".1rem" }}>{item.icon}</span>
+                    <div>
+                      <div style={{ fontSize: ".8rem", fontWeight: 600, color: "var(--cream)", marginBottom: ".15rem" }}>{item.title}</div>
+                      <div style={{ fontSize: ".73rem", color: "rgba(255,255,255,.45)", lineHeight: 1.5 }}>{item.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -277,6 +334,14 @@ export default function LandingPage() {
           <div>
             <strong>Import from ACMS</strong>
             <span>We migrate your data free</span>
+          </div>
+        </div>
+        <div className="land-reassure-divider"></div>
+        <div className="land-reassure-item">
+          <span className="land-reassure-icon">⛓️</span>
+          <div>
+            <strong>Blockchain audit trail</strong>
+            <span>Every period anchored on-chain</span>
           </div>
         </div>
       </div>
@@ -403,13 +468,55 @@ export default function LandingPage() {
                     <td className="land-compare-cell">{churchpal}</td>
                   </tr>
                 ))}
+
+                {/* ── Web3 section divider ── */}
+                <tr>
+                  <td colSpan={4} style={{
+                    padding: "0.6rem 1.2rem",
+                    background: "linear-gradient(90deg, var(--ink) 0%, var(--ink2) 100%)",
+                    borderTop: "2px solid rgba(167,139,250,.3)",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: ".6rem" }}>
+                      <span style={{ fontSize: ".85rem" }}>⛓️</span>
+                      <span style={{ fontSize: ".7rem", fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--sage2)" }}>
+                        Web3 — Industry-first features
+                      </span>
+                      <span style={{
+                        fontSize: ".62rem", fontWeight: 700, padding: ".1rem .5rem",
+                        borderRadius: 4, background: "rgba(167,139,250,.2)", color: "var(--sage3)",
+                        border: "1px solid rgba(167,139,250,.25)", letterSpacing: ".04em", textTransform: "uppercase",
+                      }}>
+                        Steward exclusive
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+
+                {[
+                  ["Blockchain audit trail", "✅ Polygon / Base anchor per period", "❌ None", "❌ None"],
+                  ["Tamper-proof period hashing", "✅ SHA-256 · publicly verifiable", "❌ None", "❌ None"],
+                  ["Public audit verification URL", "✅ /api/verify/:org/:year/:month", "❌ None", "❌ None"],
+                  ["Crypto donation imports", "✅ The Giving Block CSV (GBP-settled)", "❌ None", "❌ None"],
+                ].map(([feat, steward, acms, churchpal], i) => (
+                  <tr key={`web3-${i}`}>
+                    <td className="land-compare-feat" style={{ background: "rgba(30,27,75,.03)" }}>
+                      <span style={{ color: "var(--ink2)", fontWeight: 500 }}>{feat}</span>
+                    </td>
+                    <td className="land-compare-us-cell" style={{ background: "rgba(124,58,237,.06)" }}>
+                      <span style={{ color: "var(--sage)", fontWeight: 600 }}>{steward}</span>
+                    </td>
+                    <td className="land-compare-cell">{acms}</td>
+                    <td className="land-compare-cell">{churchpal}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
 
           <div className="land-compare-note">
-            ⚠️ Comparison based on publicly available feature information (April 2026).
+            ⚠️ Comparison based on publicly available feature information (June 2026).
             ACMS availability is limited to Seventh-day Adventist churches via their conference structure.
+            Web3 features are exclusive to Steward — blockchain anchoring uses zero-value transactions to Polygon or Base mainnet.
           </div>
         </div>
       </section>
