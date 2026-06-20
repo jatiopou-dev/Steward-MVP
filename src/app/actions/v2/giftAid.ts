@@ -358,6 +358,3 @@ export async function submitClaim(
 
   return { data: { claim: updatedClaim, summary, csv } };
 }
-
-// Pure helper — re-exported for testing.
-export { isDeclarationActive } from '@/lib/giftAid/declarations';
