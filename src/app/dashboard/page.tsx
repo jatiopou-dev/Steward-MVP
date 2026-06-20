@@ -42,6 +42,15 @@ function relatedFundName(funds: { name: string } | { name: string }[] | null): s
 }
 
 export default async function DashboardOverview() {
+  try {
+    return await DashboardOverviewInner();
+  } catch (err) {
+    console.error("[DashboardOverview error]", String(err), err instanceof Error ? err.stack : "");
+    throw err;
+  }
+}
+
+async function DashboardOverviewInner() {
   const supabase = await createClient();
 
   // Fetch org name + denomination
