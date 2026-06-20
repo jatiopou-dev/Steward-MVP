@@ -105,7 +105,7 @@ export default async function DashboardOverview() {
     .select("id, is_gift_aid_eligible");
 
   const totalMembers = memberStats?.length ?? 0;
-  const giftAidMembers = memberStats?.filter((m) => m.is_gift_aid_eligible).length ?? 0;
+  const giftAidMembers = memberStats?.filter((m) => m.is_gift_aid_eligible)?.length ?? 0;
   // Potential Gift Aid claim this year (all income transactions × 25%, simplified)
   const giftAidClaimPence = Math.round(incomePence * 0.25 * (giftAidMembers / Math.max(totalMembers, 1)));
 
