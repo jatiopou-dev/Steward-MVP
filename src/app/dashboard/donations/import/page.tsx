@@ -6,7 +6,8 @@ import DonationImportClient from "./DonationImportClient";
 
 export default async function DonationImportPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: _authData } = await supabase.auth.getUser();
+  const user = _authData?.user;
   if (!user) redirect("/auth");
 
   const { data: membership } = await supabase

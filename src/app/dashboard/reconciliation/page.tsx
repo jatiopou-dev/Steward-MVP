@@ -7,7 +7,8 @@ import { listPeriods } from "@/app/actions/v2/reconciliation";
 
 export default async function ReconciliationPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: _authData } = await supabase.auth.getUser();
+  const user = _authData?.user;
   if (!user) redirect("/auth");
 
   const { data: membership } = await supabase

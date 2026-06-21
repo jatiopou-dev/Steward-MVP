@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import Topbar from "@/components/dashboard/Topbar";
 import { getMembers, deleteMember, type Member } from "@/app/actions/members";
+import { ConfirmDeleteButton } from "@/components/dashboard/ConfirmDeleteButton";
 
 function initials(m: Member): string {
   return `${m.first_name[0] ?? ""}${m.last_name[0] ?? ""}`.toUpperCase();
@@ -208,26 +209,14 @@ export default async function MembersPage() {
                           </Link>
                           <form action={deleteMember}>
                             <input type="hidden" name="id" value={m.id} />
-                            <button
+                            <ConfirmDeleteButton
                               type="submit"
                               className="btn btn-ghost btn-sm"
-                              style={{
-                                padding: ".3rem .65rem",
-                                fontSize: ".72rem",
-                                color: "var(--rust)",
-                              }}
-                              onClick={(e) => {
-                                if (
-                                  !confirm(
-                                    `Remove ${fullName(m)} from the directory? This cannot be undone.`
-                                  )
-                                ) {
-                                  e.preventDefault();
-                                }
-                              }}
+                              style={{ padding: ".3rem .65rem", fontSize: ".72rem", color: "var(--rust)" }}
+                              message={`Remove ${fullName(m)} from the directory? This cannot be undone.`}
                             >
                               Remove
-                            </button>
+                            </ConfirmDeleteButton>
                           </form>
                         </div>
                       </td>

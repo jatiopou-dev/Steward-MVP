@@ -3,6 +3,7 @@ import Link from "next/link";
 import Topbar from "@/components/dashboard/Topbar";
 import { getFunds, deleteFund, type Fund } from "@/app/actions/funds";
 import { FUND_TYPES, FUND_STATUSES } from "@/utils/domainOptions";
+import { ConfirmDeleteButton } from "@/components/dashboard/ConfirmDeleteButton";
 
 function formatGBP(pence: number): string {
   return new Intl.NumberFormat("en-GB", {
@@ -167,18 +168,14 @@ export default async function FundsPage() {
                             </Link>
                             <form action={deleteFund}>
                               <input type="hidden" name="id" value={fund.id} />
-                              <button
+                              <ConfirmDeleteButton
                                 type="submit"
                                 className="btn btn-ghost btn-sm"
                                 style={{ padding: ".3rem .65rem", fontSize: ".72rem", color: "var(--rust)" }}
-                                onClick={(e) => {
-                                  if (!confirm(`Delete "${fund.name}"? This cannot be undone.`)) {
-                                    e.preventDefault();
-                                  }
-                                }}
+                                message={`Delete "${fund.name}"? This cannot be undone.`}
                               >
                                 Delete
-                              </button>
+                              </ConfirmDeleteButton>
                             </form>
                           </div>
                         </td>
