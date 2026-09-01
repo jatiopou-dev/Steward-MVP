@@ -9,6 +9,7 @@ import {
   type UpdateBankAccountInput,
 } from '@/lib/validation/v2';
 import type { BankAccount, ActionResult, MemberRole } from '@/lib/types/v2';
+import { createAuditLog } from './audit';
 
 const BANK_ADMIN_ROLES: MemberRole[] = ['owner', 'admin'];
 const BANK_READ_ROLES: MemberRole[] = ['owner', 'admin', 'finance_manager', 'auditor'];
@@ -48,6 +49,15 @@ export async function createBankAccount(
 
   if (error || !data) return { error: error?.message ?? 'Failed to create bank account' };
 
+  await createAuditLog({
+    organisation_id: parsed.data.organisation_id,
+    actor_user_id: actorId,
+    action: 'bank_account.created',
+    entity_type: 'bank_account',
+    entity_id: data.id,
+    new_data: { name: data.name },
+  });
+
   return { data };
 }
 
@@ -80,6 +90,16 @@ export async function updateBankAccount(
   if (!actorId) return { error: 'Permission denied: owner or admin required' };
 
   const admin = createAdminClient();
+
+  const { data: current } = await admin
+    .from('bank_accounts')
+    .select('name, account_last4, currency, status')
+    .eq('id', parsed.data.id)
+    .eq('organisation_id', parsed.data.organisation_id)
+    .single();
+
+  if (!current) return { error: 'Bank account not found' };
+
   const { id, organisation_id, ...updates } = parsed.data;
 
   const { data, error } = await admin
@@ -91,6 +111,16 @@ export async function updateBankAccount(
     .single();
 
   if (error || !data) return { error: error?.message ?? 'Failed to update bank account' };
+
+  await createAuditLog({
+    organisation_id,
+    actor_user_id: actorId,
+    action: 'bank_account.updated',
+    entity_type: 'bank_account',
+    entity_id: id,
+    previous_data: current,
+    new_data: updates,
+  });
 
   return { data };
 }
