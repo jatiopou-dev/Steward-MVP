@@ -97,6 +97,29 @@ export async function getOrganizationDetails() {
   return data;
 }
 
+export async function saveDenomination(formData: FormData) {
+  const denomination = normaliseDenomination(formData.get("denomination"));
+  const supabase = await createClient();
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("org_id")
+    .single();
+
+  if (!profile?.org_id) throw new Error("No organisation found");
+
+  const { error } = await supabase
+    .from("organizations")
+    .update({ denomination })
+    .eq("id", profile.org_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/giving");
+}
+
 export async function createOrganization(formData: FormData) {
   const name = ((formData.get('name') as string) ?? "").trim();
   const denomination = normaliseDenomination(formData.get('denomination'));

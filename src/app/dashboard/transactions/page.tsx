@@ -97,10 +97,11 @@ export default async function TransactionsPage() {
 
         <div className="card">
           <div className="card-head">
-            <div className="card-title">All transactions</div>
-            <div style={{ fontSize: ".76rem", color: "var(--stone2)" }}>
-              {transactions.length} total
+            <div>
+              <div className="card-title">Transactions</div>
+              <div className="card-sub">Latest 200 · export all from Reports</div>
             </div>
+            <Link href="/dashboard/reports" className="card-link">Export all →</Link>
           </div>
 
           {transactions.length === 0 ? (

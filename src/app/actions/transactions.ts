@@ -57,7 +57,8 @@ export async function getTransactions(): Promise<Transaction[]> {
   const { data, error } = await supabase
     .from("transactions")
     .select("*, funds(name)")
-    .order("date", { ascending: false });
+    .order("date", { ascending: false })
+    .limit(200);
 
   if (error) {
     console.error("getTransactions error:", error);

@@ -3,21 +3,19 @@ import Link from "next/link";
 import Topbar from "@/components/dashboard/Topbar";
 import { createClient } from "@/utils/supabase/server";
 import { termsMap, type Denomination } from "@/contexts/DenominationContext";
-import {
-  getGiftAidExport,
-  getGivingTransactions,
-} from "@/app/actions/giving";
+import { getGiftAidExport } from "@/app/actions/giving";
 
-function formatGBP(pence: number): string {
+function formatGBP(pence: number | bigint): string {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "GBP",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(pence / 100);
+  }).format(Number(pence) / 100);
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "—";
   return new Date(dateStr).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
@@ -25,85 +23,54 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function memberDisplayName(member: {
-  title?: string | null;
+type MemberGivingRow = {
+  member_id: string;
   first_name: string;
   last_name: string;
-} | null) {
-  if (!member) return "Anonymous / unlinked";
-  return [member.title, member.first_name, member.last_name].filter(Boolean).join(" ");
-}
+  title: string | null;
+  is_gift_aid_eligible: boolean;
+  total_pence: number;
+  ytd_pence: number;
+  month_pence: number;
+  gift_count: number;
+  last_gift_date: string | null;
+};
 
 export default async function GivingPage() {
   const supabase = await createClient();
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("denomination")
-    .single();
 
-  const terms = termsMap[(org?.denomination as Denomination) ?? "independent"];
-  const giving = await getGivingTransactions();
-  const giftAid = await getGiftAidExport();
+  const [{ data: org }, { data: profile }] = await Promise.all([
+    supabase.from("organizations").select("denomination").single(),
+    supabase.from("profiles").select("org_id").single(),
+  ]);
 
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const ytdStart = new Date(now.getFullYear(), 0, 1);
+  const terms = termsMap[(org?.denomination as Denomination) ?? "independent"] ?? termsMap["independent"];
 
-  const monthlyTotal = giving
-    .filter((tx) => new Date(tx.date) >= monthStart)
-    .reduce((sum, tx) => sum + tx.amount_pence, 0);
+  const orgId = profile?.org_id as string | undefined;
 
-  const ytdTotal = giving
-    .filter((tx) => new Date(tx.date) >= ytdStart)
-    .reduce((sum, tx) => sum + tx.amount_pence, 0);
-
-  const activeGiverIds = new Set(
-    giving
-      .filter((tx) => tx.member_id && new Date(tx.date) >= ytdStart)
-      .map((tx) => tx.member_id)
-  );
-
-  const byMember = new Map<
-    string,
-    {
-      name: string;
-      totalPence: number;
-      lastGift: string;
-      giftAidEligible: boolean;
-      count: number;
-    }
-  >();
-
-  for (const tx of giving) {
-    const key = tx.member_id ?? "anonymous";
-    const existing = byMember.get(key);
-    const row = existing ?? {
-      name: memberDisplayName(tx.members),
-      totalPence: 0,
-      lastGift: tx.date,
-      giftAidEligible: tx.members?.is_gift_aid_eligible ?? false,
-      count: 0,
-    };
-    row.totalPence += tx.amount_pence;
-    row.count += 1;
-    if (new Date(tx.date) > new Date(row.lastGift)) row.lastGift = tx.date;
-    byMember.set(key, row);
+  let giverRows: MemberGivingRow[] = [];
+  if (orgId) {
+    const { data, error } = await supabase.rpc("get_member_giving_summary", { p_org_id: orgId });
+    if (error) console.error("get_member_giving_summary error:", error);
+    giverRows = (data ?? []) as MemberGivingRow[];
   }
 
-  const giverRows = Array.from(byMember.values()).sort(
-    (a, b) => b.totalPence - a.totalPence
-  );
+  const giftAid = await getGiftAidExport();
+
+  const ytdTotal = giverRows.reduce((s, r) => s + Number(r.ytd_pence), 0);
+  const monthTotal = giverRows.reduce((s, r) => s + Number(r.month_pence), 0);
+  const activeGivers = giverRows.filter((r) => Number(r.ytd_pence) > 0).length;
+  const currentYear = new Date().getFullYear();
 
   return (
     <>
-      <Topbar 
+      <Topbar
         title={terms.giving}
         subtitle="Member giving · Gift Aid tracking"
         actions={
           <>
             <Link href="/dashboard/reports" className="btn btn-outline btn-sm">
-              Gift Aid claim
+              Reports & export
             </Link>
             <Link href="/dashboard/giving/new" className="btn btn-forest btn-sm">
               + Record giving
@@ -112,19 +79,31 @@ export default async function GivingPage() {
         }
       />
       <div className="content">
-        <div className="kpi-row" style={{gridTemplateColumns:"repeat(3,1fr)"}}>
-          <div className="kpi"><div className="kpi-lbl">Active givers (YTD)</div><div className="kpi-val">{activeGiverIds.size}</div><div className="kpi-meta neutral">{currentYear}</div></div>
-          <div className="kpi"><div className="kpi-lbl">Monthly giving total</div><div className="kpi-val">{formatGBP(monthlyTotal)}</div><div className="kpi-meta up">{giving.filter((tx) => new Date(tx.date) >= monthStart).length} gifts this month</div></div>
-          <div className="kpi"><div className="kpi-lbl">Gift Aid claimable</div><div className="kpi-val">{formatGBP(giftAid.claimablePence)}</div><div className="kpi-meta up">{giftAid.claimableCount} eligible gifts</div></div>
+        <div className="kpi-row" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
+          <div className="kpi">
+            <div className="kpi-lbl">Active givers (YTD)</div>
+            <div className="kpi-val">{activeGivers}</div>
+            <div className="kpi-meta neutral">{currentYear}</div>
+          </div>
+          <div className="kpi">
+            <div className="kpi-lbl">This month total</div>
+            <div className="kpi-val">{formatGBP(monthTotal)}</div>
+            <div className="kpi-meta up">Across all funds</div>
+          </div>
+          <div className="kpi">
+            <div className="kpi-lbl">Gift Aid claimable</div>
+            <div className="kpi-val">{formatGBP(giftAid.claimablePence)}</div>
+            <div className="kpi-meta up">{giftAid.claimableCount} eligible gifts</div>
+          </div>
         </div>
 
         <div className="card">
           <div className="card-head">
             <div>
               <div className="card-title">Giving by member</div>
-              <div className="card-sub">Year to date total: {formatGBP(ytdTotal)}</div>
+              <div className="card-sub">YTD total: {formatGBP(ytdTotal)} · {giverRows.length} members</div>
             </div>
-            <Link href="/dashboard/reports" className="card-link">Gift Aid claim →</Link>
+            <Link href="/dashboard/reports" className="card-link">Export →</Link>
           </div>
 
           {giverRows.length === 0 ? (
@@ -142,17 +121,34 @@ export default async function GivingPage() {
             </div>
           ) : (
             <table className="tbl">
-              <thead><tr><th>Name</th><th>Gifts</th><th>Total given</th><th>Gift Aid</th><th>Last gift</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Member</th>
+                  <th>Gifts</th>
+                  <th>This month</th>
+                  <th>YTD total</th>
+                  <th>Gift Aid</th>
+                  <th>Last gift</th>
+                </tr>
+              </thead>
               <tbody>
-                {giverRows.map((row) => (
-                  <tr key={row.name}>
-                    <td>{row.name}</td>
-                    <td>{row.count}</td>
-                    <td><strong>{formatGBP(row.totalPence)}</strong></td>
-                    <td>{row.giftAidEligible ? <div className="chip chip-sage">Eligible</div> : <div className="chip chip-stone">Not declared</div>}</td>
-                    <td style={{ color: "var(--stone2)" }}>{formatDate(row.lastGift)}</td>
-                  </tr>
-                ))}
+                {giverRows.map((row) => {
+                  const name = [row.title, row.first_name, row.last_name].filter(Boolean).join(" ");
+                  return (
+                    <tr key={row.member_id}>
+                      <td style={{ fontWeight: 500 }}>{name}</td>
+                      <td style={{ color: "var(--stone2)" }}>{Number(row.gift_count)}</td>
+                      <td>{Number(row.month_pence) > 0 ? formatGBP(row.month_pence) : <span style={{ color: "var(--stone2)" }}>—</span>}</td>
+                      <td><strong style={{ fontFamily: "var(--font-serif)" }}>{formatGBP(row.ytd_pence)}</strong></td>
+                      <td>
+                        {row.is_gift_aid_eligible
+                          ? <div className="chip chip-sage">Eligible</div>
+                          : <div className="chip chip-stone">No</div>}
+                      </td>
+                      <td style={{ color: "var(--stone2)", fontSize: ".82rem" }}>{formatDate(row.last_gift_date)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
