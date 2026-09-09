@@ -281,3 +281,56 @@ describe('buildCharitiesOnlineCsv', () => {
     expect(csv.split('\n')).toHaveLength(4);
   });
 });
+
+// ── buildCharitiesOnlineCsv: escaping and edge cases ──────────────────────
+
+describe('buildCharitiesOnlineCsv escaping', () => {
+  const rowFor = (donor_display_name: string): CsvDonationRow[] => [
+    { donor_display_name, transaction_date: '2024-01-15', amount_pence: 5000 },
+  ];
+  const dataLine = (name: string) => buildCharitiesOnlineCsv(rowFor(name)).split('\n')[1];
+
+  it('quotes a name containing a comma so columns are not split', () => {
+    const line = dataLine('Smith, Jr John');
+    expect(line).toBe(',"Smith,",Jr John,,,2024-01-15,50.00');
+    expect(line.split(',')).not.toHaveLength(7); // proves the comma is protected
+  });
+
+  it('doubles embedded quotes per RFC 4180', () => {
+    expect(dataLine('Jo"n Smith')).toBe(',"Jo""n",Smith,,,2024-01-15,50.00');
+  });
+
+  it('quotes a name containing a newline', () => {
+    // The quoted field legitimately spans two physical lines (RFC 4180),
+    // so assert on the whole document rather than a single split line.
+    const csv = buildCharitiesOnlineCsv(rowFor('John\nSmith'));
+    expect(csv).toContain('"John\nSmith"');
+  });
+
+  it('leaves an ordinary name unquoted', () => {
+    expect(dataLine('John Smith')).toBe(',John,Smith,,,2024-01-15,50.00');
+  });
+
+  it('always emits one header plus one line per donation', () => {
+    const csv = buildCharitiesOnlineCsv(rowFor('Smith, Jr John'));
+    expect(csv.split('\n')).toHaveLength(2);
+  });
+
+  it('handles an empty donor name', () => {
+    expect(dataLine('')).toBe(',,,,,2024-01-15,50.00');
+  });
+
+  it('formats a sub-pound amount with a leading zero', () => {
+    const csv = buildCharitiesOnlineCsv([
+      { donor_display_name: 'A B', transaction_date: '2024-01-15', amount_pence: 5 },
+    ]);
+    expect(csv).toContain(',0.05');
+  });
+
+  it('formats a four-figure donation without thousands separators', () => {
+    const csv = buildCharitiesOnlineCsv([
+      { donor_display_name: 'A B', transaction_date: '2024-01-15', amount_pence: 123456 },
+    ]);
+    expect(csv).toContain(',1234.56');
+  });
+});

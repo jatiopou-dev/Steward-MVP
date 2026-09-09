@@ -14,7 +14,7 @@ import {
   type CreateClaimInput,
   type SubmitClaimInput,
 } from '@/lib/validation/v2';
-import { isDeclarationActive } from '@/lib/giftAid/declarations';
+import { buildClaim } from '@/lib/giftAid/claims';
 import type {
   GiftAidDeclaration,
   GiftAidClaim,
@@ -191,45 +191,29 @@ export async function createClaim(
 
   const eligibleDonorIds = new Set((eligibleDonors ?? []).map((d: { id: string }) => d.id));
 
-  const { data: submittedClaimDonationsRaw } = await admin
+  // A donation may only ever appear in one claim for this organisation.
+  // Draft claims count: two overlapping drafts could otherwise both be
+  // submitted, claiming the same donation from HMRC twice.
+  const { data: claimedDonationsRaw } = await admin
     .from('gift_aid_claim_donations')
-    .select('donation_id, gift_aid_claims!inner(status)')
-    .eq('gift_aid_claims.status', 'submitted');
+    .select('donation_id, gift_aid_claims!inner(organisation_id)')
+    .eq('gift_aid_claims.organisation_id', organisation_id);
 
-  const submittedClaimDonations = submittedClaimDonationsRaw as Array<{
+  const claimedDonations = claimedDonationsRaw as Array<{
     donation_id: string;
-    gift_aid_claims: { status: string } | null;
+    gift_aid_claims: { organisation_id: string } | null;
   }> | null;
 
   const alreadyClaimedIds = new Set(
-    (submittedClaimDonations ?? []).map((r) => r.donation_id)
+    (claimedDonations ?? []).map((r) => r.donation_id)
   );
 
-  const claimRows: Array<{ donation_id: string; declaration_id: string; gift_aid_pence: number }> = [];
-  let total_donations_pence = 0;
-  let total_gift_aid_pence = 0;
-
-  for (const donation of donations ?? []) {
-    if (!eligibleDonorIds.has(donation.donor_id)) continue;
-    if (alreadyClaimedIds.has(donation.id)) continue;
-
-    const matchingDeclaration = (declarations ?? []).find(
-      (decl: { id: string; donor_id: string; effective_from: string; effective_to: string | null; revoked_at: string | null }) =>
-        decl.donor_id === donation.donor_id &&
-        isDeclarationActive(decl, donation.transaction_date)
-    );
-
-    if (!matchingDeclaration) continue;
-
-    const gift_aid_pence = Math.round(donation.amount_pence * 25.0 / 100.0);
-    claimRows.push({
-      donation_id: donation.id,
-      declaration_id: matchingDeclaration.id,
-      gift_aid_pence,
-    });
-    total_donations_pence += donation.amount_pence;
-    total_gift_aid_pence += gift_aid_pence;
-  }
+  const { claimRows, total_donations_pence, total_gift_aid_pence } = buildClaim({
+    donations: donations ?? [],
+    declarations: declarations ?? [],
+    eligibleDonorIds,
+    alreadyClaimedDonationIds: alreadyClaimedIds,
+  });
 
   const { data: claim, error: claimError } = await admin
     .from('gift_aid_claims')
