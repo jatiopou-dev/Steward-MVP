@@ -16,7 +16,7 @@ import type {
 } from '@/lib/types/v2';
 import { createAuditLog } from './audit';
 import { buildAnchorPayload, hashAnchorPayload, submitAnchorTx } from '@/lib/blockchain/anchor';
-import { lastDayOfMonth } from '@/lib/utils/date';
+import { periodRange } from '@/lib/reconciliation/period';
 
 const ANCHOR_WRITE_ROLES: MemberRole[] = ['owner', 'admin', 'finance_manager'];
 
@@ -50,8 +50,8 @@ export async function anchorPeriod(
       .from('donations')
       .select('id')
       .eq('organisation_id', period.organisation_id)
-      .gte('transaction_date', `${period.year}-${String(period.month).padStart(2, '0')}-01`)
-      .lte('transaction_date', lastDayOfMonth(period.year, period.month));
+      .gte('transaction_date', periodRange(period.year, period.month).from)
+      .lte('transaction_date', periodRange(period.year, period.month).to);
 
     const { data: auditLogs } = await admin
       .from('audit_logs')
@@ -153,8 +153,8 @@ export async function reanchorPeriod(
     .from('donations')
     .select('id')
     .eq('organisation_id', organisation_id)
-    .gte('transaction_date', `${period.year}-${String(period.month).padStart(2, '0')}-01`)
-    .lte('transaction_date', lastDayOfMonth(period.year, period.month));
+    .gte('transaction_date', periodRange(period.year, period.month).from)
+    .lte('transaction_date', periodRange(period.year, period.month).to);
 
   const { data: auditLogs } = await admin
     .from('audit_logs')

@@ -10,13 +10,12 @@ import {
 } from '@/lib/validation/v2';
 import type {
   ReconciliationPeriod,
-  AppealSummary,
   ActionResult,
   MemberRole,
 } from '@/lib/types/v2';
 import { createAuditLog } from './audit';
 import { anchorPeriod } from './chainAnchors';
-import { lastDayOfMonth } from '@/lib/utils/date';
+import { periodRange, periodLabel, parsePeriod, summarisePeriod } from '@/lib/reconciliation/period';
 
 const RECON_WRITE_ROLES: MemberRole[] = ['owner', 'admin', 'finance_manager'];
 const RECON_READ_ROLES: MemberRole[] = ['owner', 'admin', 'finance_manager', 'auditor'];
@@ -44,11 +43,9 @@ export async function checkPeriodLocked(
   organisation_id: string,
   transaction_date: string
 ): Promise<boolean> {
-  const [yearStr, monthStr] = transaction_date.split('-');
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10);
-
-  if (isNaN(year) || isNaN(month)) return false;
+  const period = parsePeriod(transaction_date);
+  if (!period) return false;
+  const { year, month } = period;
 
   const admin = createAdminClient();
   const { data } = await admin
@@ -86,49 +83,33 @@ export async function closePeriod(
     .maybeSingle();
 
   if (existing?.status === 'closed') {
-    return { error: `Period ${year}-${String(month).padStart(2, '0')} is already closed` };
+    return { error: `Period ${periodLabel(year, month)} is already closed` };
   }
 
   // Aggregate donation totals for this period
+  const { from: periodFrom, to: periodTo } = periodRange(year, month);
+
   const { data: donations } = await admin
     .from('donations')
     .select('id, amount_pence, appeal_id')
     .eq('organisation_id', organisation_id)
-    .gte('transaction_date', `${year}-${String(month).padStart(2, '0')}-01`)
-    .lte('transaction_date', lastDayOfMonth(year, month));
+    .gte('transaction_date', periodFrom)
+    .lte('transaction_date', periodTo);
 
   const donationList = donations ?? [];
-  const donation_count = donationList.length;
-  const total_pence = donationList.reduce((sum, d: { amount_pence: number }) => sum + d.amount_pence, 0);
 
-  // Build appeal summary
-  const appealTotals = new Map<string, { count: number; total_pence: number }>();
-  for (const d of donationList) {
-    if (d.appeal_id) {
-      const prev = appealTotals.get(d.appeal_id) ?? { count: 0, total_pence: 0 };
-      appealTotals.set(d.appeal_id, {
-        count: prev.count + 1,
-        total_pence: prev.total_pence + d.amount_pence,
-      });
-    }
-  }
+  const appealIds = Array.from(
+    new Set(donationList.flatMap((d: { appeal_id: string | null }) => (d.appeal_id ? [d.appeal_id] : [])))
+  );
 
-  let summary_by_appeal: AppealSummary[] = [];
-  if (appealTotals.size > 0) {
-    const appealIds = Array.from(appealTotals.keys());
-    const { data: appeals } = await admin
-      .from('appeals')
-      .select('id, code, name')
-      .in('id', appealIds);
+  const { data: appeals } = appealIds.length
+    ? await admin.from('appeals').select('id, code, name').in('id', appealIds)
+    : { data: [] };
 
-    summary_by_appeal = (appeals ?? []).map((a: { id: string; code: string; name: string }) => ({
-      appeal_id: a.id,
-      appeal_code: a.code,
-      appeal_name: a.name,
-      count: appealTotals.get(a.id)?.count ?? 0,
-      total_pence: appealTotals.get(a.id)?.total_pence ?? 0,
-    }));
-  }
+  const { donation_count, total_pence, summary_by_appeal } = summarisePeriod({
+    donations: donationList,
+    appeals: appeals ?? [],
+  });
 
   const periodData = {
     organisation_id,
@@ -169,8 +150,8 @@ export async function closePeriod(
       .from('donations')
       .update({ status: 'reconciled' })
       .eq('organisation_id', organisation_id)
-      .gte('transaction_date', `${year}-${String(month).padStart(2, '0')}-01`)
-      .lte('transaction_date', lastDayOfMonth(year, month))
+      .gte('transaction_date', periodFrom)
+      .lte('transaction_date', periodTo)
       .neq('status', 'reconciled');
 
     if (reconcileError) {
