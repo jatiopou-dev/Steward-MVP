@@ -6,10 +6,7 @@ import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
-  const { data: authData } = await supabase.auth.getUser().catch((e: unknown) => {
-    console.error("[DashboardLayout getUser error]", String(e));
-    return { data: { user: null }, error: null };
-  });
+  const { data: authData } = await supabase.auth.getUser();
   const user = authData?.user;
 
   if (!user) {
