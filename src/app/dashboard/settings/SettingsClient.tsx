@@ -104,7 +104,7 @@ export default function SettingsClient({ initialDenomination }: Props) {
         <p className="card-sub" style={{ marginBottom: "1.5rem" }}>
           Upgrade to Premium to unlock bulk SMS, automated HMRC pipelines, and multi-site support.
         </p>
-        <CheckoutButton plan="premium" amount={49} className="btn btn-forest">
+        <CheckoutButton plan="premium" className="btn btn-forest">
           Upgrade to Premium (£49/mo)
         </CheckoutButton>
       </div>

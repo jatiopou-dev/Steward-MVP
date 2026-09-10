@@ -1,16 +1,14 @@
 "use client";
 import React, { useState } from "react";
 
-export default function CheckoutButton({ 
-  plan, 
-  amount, 
-  className, 
-  children 
-}: { 
-  plan: string; 
-  amount: number; 
-  className: string; 
-  children: React.ReactNode; 
+export default function CheckoutButton({
+  plan,
+  className,
+  children
+}: {
+  plan: string;
+  className: string;
+  children: React.ReactNode;
 }) {
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +18,7 @@ export default function CheckoutButton({
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, amount })
+        body: JSON.stringify({ plan })
       });
       const data = await res.json();
       if (data.url) {
