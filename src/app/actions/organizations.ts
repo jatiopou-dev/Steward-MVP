@@ -1,5 +1,6 @@
 "use server"
 
+import { createAdminClient } from '@/utils/supabase/admin';
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -132,20 +133,56 @@ export async function createOrganization(formData: FormData) {
   if (userError || !user) {
     redirect('/auth');
   }
-  
-  // 1. Create org
-  const { data: org, error: orgError } = await supabase
-    .from('organizations')
-    .insert({ name, denomination, tier: 'church' })
-    .select()
-    .single();
-    
-  if (orgError || !org) throw new Error(orgError?.message || "Failed to create organization");
 
-  // 2. Get current user and update their profile to belong to this new org
-  const { error: profileError } = await supabase
+  // Bootstrap writes go through the service role. Every row below is readable
+  // only once profiles.org_id points at the new organisation, so the user's own
+  // client cannot read back a row it has just inserted — Postgres applies the
+  // SELECT policy to the RETURNING clause and rejects the insert outright.
+  // The signed-in user above is what authorises this; each row is pinned to them.
+  const admin = createAdminClient();
+
+  // The app carries two tenancy models: `organizations` + profiles.org_id
+  // (overview, funds, transactions, members, reports) and `organisations` +
+  // `memberships` (donors, Gift Aid, appeals, reconciliation, imports).
+  // Creating only the first left half the navigation bouncing back here
+  // forever. Both rows are written under ONE id, so reconciliation_periods —
+  // keyed by organisation_id — is the same org the overview reads its seal
+  // from, rather than a second church that merely shares a name.
+  const orgId = crypto.randomUUID();
+
+  // 1. Create the org, in both shapes.
+  const { error: orgError } = await admin
+    .from('organizations')
+    .insert({ id: orgId, name, denomination, tier: 'church' });
+
+  if (orgError) throw new Error(orgError.message || "Failed to create organization");
+
+  const { error: orgV2Error } = await admin
+    .from('organisations')
+    .insert({ id: orgId, name, type: 'church' });
+
+  if (orgV2Error) throw new Error(orgV2Error.message);
+
+  // Whoever creates the church owns it. 'treasurer' is the profiles
+  // vocabulary; memberships keeps its own and accepts only these roles.
+  const { error: membershipError } = await admin
+    .from('memberships')
+    .insert({
+      user_id: user.id,
+      organisation_id: orgId,
+      role: 'owner',
+      status: 'active',
+    });
+
+  if (membershipError) throw new Error(membershipError.message);
+
+  // 2. Point the user's profile at the new org. Deliberately last of the
+  // ownership writes: this link is what lets them past onboarding, so a
+  // failure above leaves them here able to try again rather than inside a
+  // half-built workspace.
+  const { error: profileError } = await admin
     .from('profiles')
-    .update({ org_id: org.id })
+    .update({ org_id: orgId })
     .eq('id', user.id);
 
   if (profileError) {
@@ -153,10 +190,10 @@ export async function createOrganization(formData: FormData) {
   }
 
   // 3. Create denomination config and starter funds for a useful first dashboard.
-  const { error: configError } = await supabase
+  const { error: configError } = await admin
     .from('denomination_config')
     .insert({
-      org_id: org.id,
+      org_id: orgId,
       ...denominationTerms[denomination],
     });
 
@@ -164,10 +201,10 @@ export async function createOrganization(formData: FormData) {
     throw new Error(configError.message);
   }
 
-  const { error: fundsError } = await supabase
+  const { error: fundsError } = await admin
     .from('funds')
     .insert(defaultFunds.map((fund) => ({
-      org_id: org.id,
+      org_id: orgId,
       name: fund.name,
       type: fund.type,
       balance_pence: 0,

@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { User, Plus } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import Topbar from "@/components/dashboard/Topbar";
@@ -63,7 +64,8 @@ export default async function DonorsPage() {
         subtitle={`${total} donor${total !== 1 ? "s" : ""} · ${active} active`}
         actions={
           <Link href="/dashboard/donors/new" className="btn btn-forest btn-sm">
-            + Add donor
+                <Plus aria-hidden="true" />
+                Add donor
           </Link>
         }
       />
@@ -101,17 +103,20 @@ export default async function DonorsPage() {
           </div>
 
           {donors.length === 0 ? (
-            <div style={{ padding: "3rem", textAlign: "center" }}>
-              <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>👤</div>
-              <h3 style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", marginBottom: ".5rem" }}>
+            <div className="empty">
+              <div className="empty-icon">
+                <User size={18} strokeWidth={1.8} aria-hidden="true" />
+              </div>
+              <h3 className="empty-title">
                 No donors yet
               </h3>
-              <p style={{ fontSize: ".84rem", color: "var(--stone2)", marginBottom: "1.5rem" }}>
+              <p className="empty-body">
                 Donors are individuals or organisations whose donations are tracked in the finance system.
                 They are linked to donations and Gift Aid declarations.
               </p>
               <Link href="/dashboard/donors/new" className="btn btn-forest btn-sm">
-                + Add first donor
+                <Plus aria-hidden="true" />
+                Add first donor
               </Link>
             </div>
           ) : (

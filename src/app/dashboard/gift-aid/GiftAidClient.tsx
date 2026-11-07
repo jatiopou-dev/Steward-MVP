@@ -237,7 +237,7 @@ export default function GiftAidClient({
                   <Button
                     onClick={handleCreateClaim}
                     disabled={isPendingCreate || !claimFrom || !claimTo}
-                    style={{ background: "var(--forest)", color: "var(--cream)" }}
+                    style={{ background: "var(--invert-surface)", color: "var(--invert-ink)" }}
                     className="w-full"
                   >
                     <Plus className="w-4 h-4 mr-2" />

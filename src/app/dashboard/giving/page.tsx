@@ -1,8 +1,9 @@
 import React from "react";
 import Link from "next/link";
+import { HandCoins, Plus } from "lucide-react";
 import Topbar from "@/components/dashboard/Topbar";
 import { createClient } from "@/utils/supabase/server";
-import { termsMap, type Denomination } from "@/contexts/DenominationContext";
+import { termsMap, type Denomination } from "@/lib/denominations";
 import { getGiftAidExport } from "@/app/actions/giving";
 
 function formatGBP(pence: number | bigint): string {
@@ -73,7 +74,8 @@ export default async function GivingPage() {
               Reports & export
             </Link>
             <Link href="/dashboard/giving/new" className="btn btn-forest btn-sm">
-              + Record giving
+                <Plus aria-hidden="true" />
+                Record giving
             </Link>
           </>
         }
@@ -107,16 +109,19 @@ export default async function GivingPage() {
           </div>
 
           {giverRows.length === 0 ? (
-            <div style={{ padding: "3rem", textAlign: "center" }}>
-              <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>🎁</div>
-              <h3 style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", marginBottom: ".5rem" }}>
+            <div className="empty">
+              <div className="empty-icon">
+                <HandCoins size={18} strokeWidth={1.8} aria-hidden="true" />
+              </div>
+              <h3 className="empty-title">
                 No giving recorded yet
               </h3>
-              <p style={{ fontSize: ".84rem", color: "var(--stone2)", marginBottom: "1.5rem" }}>
+              <p className="empty-body">
                 Record member donations here to track giving and generate Gift Aid claims.
               </p>
               <Link href="/dashboard/giving/new" className="btn btn-forest btn-sm">
-                + Record first gift
+                <Plus aria-hidden="true" />
+                Record first gift
               </Link>
             </div>
           ) : (

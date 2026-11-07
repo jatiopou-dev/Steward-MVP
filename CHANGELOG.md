@@ -545,6 +545,24 @@ All notable changes to Steward are documented here.
 
 ## [Unreleased]
 
+### Changed — 2026-11-07
+- package-lock.json
+- package.json
+- public/sw.js
+- src/app/app-shell.css
+- src/app/auth/page.tsx
+- src/app/dashboard/ai/page.tsx
+- src/app/dashboard/appeals/page.tsx
+- src/app/dashboard/budget/page.tsx
+- src/app/dashboard/donations/import/DonationImportClient.tsx
+- src/app/dashboard/donors/page.tsx
+- src/app/dashboard/error.tsx
+- src/app/dashboard/funds/page.tsx
+- src/app/dashboard/giving/page.tsx
+- src/app/dashboard/members/page.tsx
+- src/app/dashboard/page.tsx
+
+
 ### Changed — 2026-06-18
 - public/sw.js
 - src/app/actions/funds.ts

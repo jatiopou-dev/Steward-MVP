@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { UsersRound, Plus } from "lucide-react";
 import Topbar from "@/components/dashboard/Topbar";
 import { getMembers, deleteMember, type Member } from "@/app/actions/members";
 import { ConfirmDeleteButton } from "@/components/dashboard/ConfirmDeleteButton";
@@ -57,7 +58,8 @@ export default async function MembersPage() {
         subtitle={`${total} member${total !== 1 ? "s" : ""} · ${active} active`}
         actions={
           <Link href="/dashboard/members/new" className="btn btn-forest btn-sm">
-            + Add member
+                <Plus aria-hidden="true" />
+                Add member
           </Link>
         }
       />
@@ -99,8 +101,10 @@ export default async function MembersPage() {
           </div>
 
           {members.length === 0 ? (
-            <div style={{ padding: "3rem", textAlign: "center" }}>
-              <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>👥</div>
+            <div className="empty">
+              <div className="empty-icon">
+                <UsersRound size={18} strokeWidth={1.8} aria-hidden="true" />
+              </div>
               <h3
                 style={{
                   fontFamily: "var(--font-serif)",

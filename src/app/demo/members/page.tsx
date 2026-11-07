@@ -70,7 +70,7 @@ export default function DemoMembers() {
                         className="btn btn-outline btn-sm"
                         style={{ color: "var(--rust)", borderColor: "var(--rust)" }}
                         onClick={() => dispatch({ type: "DELETE_MEMBER", id: m.id })}
-                      >✕</button>
+                      >&times;</button>
                     </div>
                   </td>
                 </tr>
@@ -92,7 +92,7 @@ export default function DemoMembers() {
             </div>
             <div className="setting-row"><div className="setting-label">Member since</div><strong>{selected.since}</strong></div>
             <div className="setting-row"><div className="setting-label">Giving (YTD)</div><strong>{selected.giving}</strong></div>
-            <div className="setting-row"><div className="setting-label">Gift Aid</div><strong>{selected.giftAid ? "✅ Eligible" : "❌ Not declared"}</strong></div>
+            <div className="setting-row"><div className="setting-label">Gift Aid</div><strong><span className={`chip ${selected.giftAid ? "chip-sage" : "chip-stone"}`}>{selected.giftAid ? "Eligible" : "Not declared"}</span></strong></div>
             <div className="setting-row"><div className="setting-label">Years of membership</div><strong>{new Date().getFullYear() - selected.since} years</strong></div>
             <div style={{ marginTop: "1.5rem" }}>
               <div className="card-title" style={{ marginBottom: "0.75rem" }}>Giving history</div>
@@ -103,7 +103,7 @@ export default function DemoMembers() {
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem", marginBottom: 2 }}>
                       <span>{mo} 2026</span><span>£{Math.round(selected.pence / 100 / 4)} / mo</span>
                     </div>
-                    <div className="fund-bar"><div className="fund-fill" style={{ width: `${pct}%`, background: "var(--forest)" }}></div></div>
+                    <div className="fund-bar"><div className="fund-fill" style={{ "--fill": pct / 100, background: "var(--forest)" } as React.CSSProperties}></div></div>
                   </div>
                 );
               })}

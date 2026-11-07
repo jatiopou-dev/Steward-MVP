@@ -1,5 +1,7 @@
 "use client";
 
+import { TriangleAlert } from "lucide-react";
+
 import { useEffect } from "react";
 
 export default function DashboardError({
@@ -19,7 +21,9 @@ export default function DashboardError({
       justifyContent: "center", height: "100vh", gap: "1rem",
       background: "var(--parchment)", fontFamily: "var(--font-serif)",
     }}>
-      <div style={{ fontSize: "2rem" }}>⚠️</div>
+      <div className="empty-icon" style={{ color: "var(--neg)" }}>
+        <TriangleAlert size={18} strokeWidth={1.8} aria-hidden="true" />
+      </div>
       <h2 style={{ color: "var(--ink)", margin: 0 }}>Something went wrong</h2>
       <p style={{ color: "var(--stone2)", fontSize: ".85rem", margin: 0 }}>
         {error.message || "An unexpected error occurred loading the dashboard."}

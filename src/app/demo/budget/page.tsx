@@ -57,7 +57,7 @@ export default function DemoBudget() {
         <div className="card">
           <div className="card-head">
             <div className="card-title">Budget vs Actual — Q1 2026</div>
-            <div className="card-sub" style={{ fontSize: "0.82rem", color: "var(--fg-muted)" }}>💡 Click any budget or actual figure to edit it</div>
+            <div className="card-sub" style={{ fontSize: "0.82rem", color: "var(--fg-muted)" }}>Select any budget or actual figure to edit it</div>
           </div>
           <table className="tbl">
             <thead>
@@ -71,19 +71,19 @@ export default function DemoBudget() {
                 return (
                   <tr key={i} style={{ background: over ? "rgba(220,53,69,0.04)" : undefined }}>
                     <td><strong>{l.cat}</strong></td>
-                    <td onClick={() => startEdit(i, "budget", l.budget)} style={{ cursor: "pointer", color: "var(--forest)" }}>
+                    <td onClick={() => startEdit(i, "budget", l.budget)} style={{ cursor: "pointer", color: "var(--accent)" }}>
                       {editing?.row === i && editing.field === "budget" ? (
                         <input autoFocus type="number" value={editVal} onChange={e => setEditVal(e.target.value)} onBlur={commitEdit} onKeyDown={e => e.key === "Enter" && commitEdit()} style={{ width: 90, padding: "2px 6px", borderRadius: 6, border: "1px solid var(--border)" }} />
                       ) : `£${l.budget.toLocaleString()}`}
                     </td>
-                    <td onClick={() => startEdit(i, "actual", l.actual)} style={{ cursor: "pointer", color: "var(--forest)" }}>
+                    <td onClick={() => startEdit(i, "actual", l.actual)} style={{ cursor: "pointer", color: "var(--accent)" }}>
                       {editing?.row === i && editing.field === "actual" ? (
                         <input autoFocus type="number" value={editVal} onChange={e => setEditVal(e.target.value)} onBlur={commitEdit} onKeyDown={e => e.key === "Enter" && commitEdit()} style={{ width: 90, padding: "2px 6px", borderRadius: 6, border: "1px solid var(--border)" }} />
                       ) : `£${l.actual.toLocaleString()}`}
                     </td>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <div className="fund-bar" style={{ width: 80, margin: 0 }}><div className="fund-fill" style={{ width: `${Math.min(pct, 100)}%`, background: over ? "var(--rust)" : "var(--forest)" }}></div></div>
+                        <div className="fund-bar" style={{ width: 80, margin: 0 }}><div className="fund-fill" style={{ "--fill": Math.min(pct, 100) / 100, background: over ? "var(--neg)" : "var(--accent)" } as React.CSSProperties}></div></div>
                         {pct}%
                       </div>
                     </td>

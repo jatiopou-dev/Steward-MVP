@@ -38,10 +38,10 @@ export default function DemoPayroll() {
     <>
       <Topbar
         title="Payroll"
-        subtitle={`Staff payroll · April 2026${ran ? " · ✅ Processed" : ""}`}
+        subtitle={`Staff payroll · April 2026${ran ? " · Processed" : ""}`}
         actions={
           <button className="btn btn-forest btn-sm" onClick={() => setShowConfirm(true)} disabled={running || ran}>
-            {running ? "Processing..." : ran ? "✅ Payroll sent" : "▶ Run Payroll"}
+            {running ? "Processing…" : ran ? "Payroll sent" : "Run payroll"}
           </button>
         }
       />
@@ -78,11 +78,11 @@ export default function DemoPayroll() {
         {ran && (
           <div className="ai-card" style={{ marginTop: "1rem" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
-              <div className="ai-badge">✅ Confirmed</div>
+              <div className="ai-badge">Confirmed</div>
               <div className="serif" style={{ color: "var(--cream)", fontWeight: 600 }}>Payroll run complete</div>
             </div>
             <div className="ai-insight">
-              ✅ £{(staff.reduce((s, e) => s + e.net, 0)).toLocaleString()} sent to {staff.length} employees. HMRC payment of £{paye + employerNI} due by <strong>19 May 2026</strong>. Payslips are ready to download.
+              £{(staff.reduce((s, e) => s + e.net, 0)).toLocaleString()} sent to {staff.length} employees. HMRC payment of £{paye + employerNI} due by <strong>19 May 2026</strong>. Payslips are ready to download.
             </div>
           </div>
         )}

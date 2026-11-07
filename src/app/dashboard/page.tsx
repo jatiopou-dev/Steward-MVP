@@ -1,10 +1,32 @@
 import React from "react";
 import Link from "next/link";
-import Topbar from "@/components/dashboard/Topbar";
+import {
+  ArrowRight,
+  CalendarCheck,
+  FileSpreadsheet,
+  Inbox,
+  Plus,
+  Sparkles,
+  Wallet,
+} from "lucide-react";
+import { categoryIcon } from "@/lib/category-icons";
+import Topbar, { type SealState } from "@/components/dashboard/Topbar";
+import { CountUp, Meter, Reveal } from "@/components/motion";
 import { createClient } from "@/utils/supabase/server";
-import { termsMap, type Denomination } from "@/contexts/DenominationContext";
+import { termsMap, type Denomination } from "@/lib/denominations";
 
-const FUND_BAR_COLOURS = ["var(--forest)", "var(--gold)", "var(--sage)", "var(--stone2)", "var(--rust)"];
+/**
+ * Fund bars share one hue family and step down in lightness, so the
+ * chart reads as a single ordered series rather than five competing
+ * categories. The semantic colours stay reserved for money direction.
+ */
+const FUND_BAR_COLOURS = [
+  "var(--a-500)",
+  "var(--a-400)",
+  "var(--seal)",
+  "var(--a-200)",
+  "var(--n-400)",
+];
 
 function formatGBP(pence: number): string {
   return new Intl.NumberFormat("en-GB", {
@@ -23,20 +45,6 @@ function formatDate(dateStr: string | null | undefined): string {
   });
 }
 
-function categoryIcon(category: string | null | undefined, isIncome: boolean): string {
-  if (!category) return isIncome ? "🎁" : "💳";
-  const map: Record<string, string> = {
-    "Regular giving": "🎁", "Tithe & offering": "🙏", "Special offering": "✨",
-    "Fundraising": "🎪", "Grant": "📋", "Hall hire": "🏛",
-    "Wedding / funeral fees": "⛪", "Other income": "💰",
-    "Payroll & wages": "💼", "Building & facilities": "🏢",
-    "Ministry & outreach": "🌍", "Administration": "📁",
-    "Worship & music": "🎵", "Utilities": "⚡", "Mission giving": "🌐",
-    "Insurance": "🛡", "Community events": "🎉", "Other expense": "📤",
-  };
-  return map[category] ?? (isIncome ? "🎁" : "💳");
-}
-
 function relatedFundName(funds: { name: string } | { name: string }[] | null | undefined): string {
   if (!funds) return "Unassigned";
   if (Array.isArray(funds)) return funds[0]?.name ?? "Unassigned";
@@ -53,21 +61,21 @@ type MonthlySummary = {
 export default async function DashboardOverview() {
   const supabase = await createClient();
 
-  // Get profile to obtain org_id for RPC calls
   const { data: profile } = await supabase
     .from("profiles")
     .select("org_id")
     .single();
 
   const orgId = profile?.org_id as string | undefined;
+  const now = new Date();
 
-  // Parallel fetch everything
   const [
     { data: orgData },
     { data: rawMonthly },
     { data: recentTxs },
     { data: fundsData },
     { data: memberStats },
+    { data: periodData },
   ] = await Promise.all([
     supabase.from("organizations").select("name, denomination").single(),
     orgId
@@ -77,33 +85,40 @@ export default async function DashboardOverview() {
       .from("transactions")
       .select("id, description, category, amount_pence, date, funds(name)")
       .order("date", { ascending: false })
-      .limit(5),
+      .limit(6),
     supabase
       .from("funds")
       .select("id, name, balance_pence")
       .eq("status", "active")
       .order("balance_pence", { ascending: false })
       .limit(5),
-    supabase
-      .from("members")
-      .select("id, is_gift_aid_eligible")
-      .limit(1000),
+    supabase.from("members").select("id, is_gift_aid_eligible").limit(1000),
+    // The seal reports the real reconciliation period, never a guess.
+    orgId
+      ? supabase
+          .from("reconciliation_periods")
+          .select("status, total_pence, donation_count")
+          .eq("organisation_id", orgId)
+          .eq("year", now.getFullYear())
+          .eq("month", now.getMonth() + 1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   const org = orgData as { name?: string; denomination?: string } | null;
-  const denomination = ((org?.denomination ?? "independent") as Denomination);
+  const denomination = (org?.denomination ?? "independent") as Denomination;
   const terms = termsMap[denomination] ?? termsMap["independent"];
   const orgName = org?.name ?? "Your Church";
 
   const monthly = (rawMonthly ?? []) as MonthlySummary[];
-  const now = new Date();
   const monthLabel = now.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  const shortMonth = now.toLocaleDateString("en-GB", { month: "short" });
 
-  // Current month from the monthly summary (first row = most recent)
   const currentMonth = monthly[0] ?? { income_pence: 0, expense_pence: 0, tx_count: 0 };
   const incomePence = Number(currentMonth.income_pence);
   const expensePence = Number(currentMonth.expense_pence);
   const netPence = incomePence - expensePence;
+  const txCount = Number(currentMonth.tx_count);
 
   const funds = fundsData ?? [];
   const totalFundsPence = funds.reduce((s, f) => s + (f.balance_pence ?? 0), 0);
@@ -115,6 +130,14 @@ export default async function DashboardOverview() {
     incomePence * 0.25 * (totalMembers > 0 ? giftAidMembers / totalMembers : 0)
   );
 
+  const period = periodData as
+    | { status: string; total_pence: number; donation_count: number }
+    | null;
+  const sealState: SealState =
+    period?.status === "closed" ? "verified" : incomePence > 0 ? "pending" : "none";
+  const sealFraction =
+    incomePence > 0 && period ? Math.min(1, Number(period.total_pence) / incomePence) : 0;
+
   const recent = (recentTxs ?? []) as Array<{
     id: string;
     description: string | null;
@@ -124,45 +147,64 @@ export default async function DashboardOverview() {
     funds: { name: string } | { name: string }[] | null;
   }>;
 
+  const hasActivity = incomePence !== 0 || expensePence !== 0 || recent.length > 0;
+
   return (
     <>
       <Topbar
         title="Overview"
         subtitle={`${orgName} · ${monthLabel}`}
+        seal={{ state: sealState, fraction: sealFraction }}
         actions={
           <>
             <Link href="/dashboard/reports" className="btn btn-outline btn-sm">
+              <FileSpreadsheet aria-hidden="true" />
               Reports
             </Link>
             <Link href="/dashboard/transactions/new" className="btn btn-forest btn-sm">
-              + Transaction
+              <Plus aria-hidden="true" />
+              Transaction
             </Link>
           </>
         }
       />
 
       <div className="content">
-        {/* ── KPI row ── */}
+        {/* ── The four figures a treasurer checks first. Each names its
+             period, so no number is ambiguous out of context. ── */}
         <div className="kpi-row">
           <div className="kpi">
-            <div className="kpi-lbl">Income ({now.toLocaleDateString("en-GB", { month: "short" })})</div>
-            <div className="kpi-val">{formatGBP(incomePence)}</div>
-            <div className="kpi-meta neutral">{Number(currentMonth.tx_count)} transactions</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-lbl">Expenditure ({now.toLocaleDateString("en-GB", { month: "short" })})</div>
-            <div className="kpi-val">{formatGBP(expensePence)}</div>
-            <div className="kpi-meta neutral">This month</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-lbl">Net {netPence >= 0 ? "surplus" : "deficit"}</div>
-            <div className="kpi-val">{formatGBP(Math.abs(netPence))}</div>
-            <div className={`kpi-meta ${netPence >= 0 ? "up" : "down"}`}>
-              {netPence >= 0 ? "↑ Surplus" : "↓ Deficit"} this month
+            <div className="kpi-lbl">Income · {shortMonth}</div>
+            <div className="kpi-val">
+              <CountUp value={incomePence} format="gbp" />
+            </div>
+            <div className="kpi-meta neutral">
+              {txCount} {txCount === 1 ? "transaction" : "transactions"}
             </div>
           </div>
+
           <div className="kpi">
-            <div className="kpi-lbl">{terms.giving}</div>
+            <div className="kpi-lbl">Expenditure · {shortMonth}</div>
+            <div className="kpi-val">
+              <CountUp value={expensePence} format="gbp" />
+            </div>
+            <div className="kpi-meta neutral">Paid out this month</div>
+          </div>
+
+          <div className="kpi">
+            <div className="kpi-lbl">
+              Net {netPence >= 0 ? "surplus" : "deficit"} · {shortMonth}
+            </div>
+            <div className={`kpi-val ${netPence >= 0 ? "num-pos" : "num-neg"}`}>
+              <CountUp value={Math.abs(netPence)} format="gbp" />
+            </div>
+            <div className={`kpi-meta ${netPence >= 0 ? "up" : "down"}`}>
+              {netPence >= 0 ? "Income exceeds spend" : "Spend exceeds income"}
+            </div>
+          </div>
+
+          <div className="kpi">
+            <div className="kpi-lbl">On the roll</div>
             <div className="kpi-val">{totalMembers}</div>
             <div className="kpi-meta neutral">
               {totalMembers === 0 ? "No members yet" : `${giftAidMembers} Gift Aid eligible`}
@@ -172,142 +214,226 @@ export default async function DashboardOverview() {
 
         <div className="two-col">
           {/* ── Recent transactions ── */}
-          <div className="card">
+          <Reveal className="card">
             <div className="card-head">
               <div>
-                <div className="card-title">Recent transactions</div>
-                <div className="card-sub">Latest activity · all funds</div>
+                <h2 className="card-title">Recent transactions</h2>
+                <div className="card-sub">Latest activity across all funds</div>
               </div>
-              <Link href="/dashboard/transactions" className="card-link">View all →</Link>
+              <Link href="/dashboard/transactions" className="card-link">
+                View all
+                <ArrowRight size={13} aria-hidden="true" />
+              </Link>
             </div>
 
             {recent.length === 0 ? (
-              <div style={{ padding: "2rem", textAlign: "center" }}>
-                <div style={{ fontSize: "1.8rem", marginBottom: ".6rem" }}>📭</div>
-                <p style={{ fontSize: ".84rem", color: "var(--stone2)", marginBottom: "1rem" }}>No transactions yet.</p>
-                <Link href="/dashboard/transactions/new" className="btn btn-forest btn-sm">+ Add first transaction</Link>
+              <div className="empty">
+                <div className="empty-icon">
+                  <Inbox size={18} strokeWidth={1.8} aria-hidden="true" />
+                </div>
+                <div className="empty-title">No transactions yet</div>
+                <p className="empty-body">
+                  Record your first offering or payment, or import a bank
+                  statement to populate the ledger in one pass.
+                </p>
+                <div className="empty-actions">
+                  <Link href="/dashboard/transactions/new" className="btn btn-forest btn-sm">
+                    <Plus aria-hidden="true" />
+                    Add transaction
+                  </Link>
+                  <Link href="/dashboard/transactions/import" className="btn btn-outline btn-sm">
+                    Import statement
+                  </Link>
+                </div>
               </div>
             ) : (
               <div className="tx-list">
                 {recent.map((tx) => {
                   const isIncome = tx.amount_pence > 0;
+                  const Icon = categoryIcon(tx.category, isIncome);
                   return (
-                    <div className="tx" key={tx.id}>
-                      <div className={`tx-ico ${isIncome ? "inc" : "exp"}`}>
-                        {categoryIcon(tx.category, isIncome)}
-                      </div>
-                      <div className="tx-body">
-                        <div className="tx-name">{tx.description ?? "—"}</div>
-                        <div className="tx-meta">
-                          {relatedFundName(tx.funds)} · {tx.category ?? "Uncategorised"} · {formatDate(tx.date)}
-                        </div>
-                      </div>
-                      <div className={`tx-amt ${isIncome ? "inc" : "exp"}`}>
-                        {isIncome ? "+" : "−"}{formatGBP(tx.amount_pence)}
-                      </div>
-                    </div>
+                    <Link href={`/dashboard/transactions/${tx.id}`} className="tx" key={tx.id}>
+                      <span className="avatar" aria-hidden="true">
+                        <Icon size={15} strokeWidth={1.8} />
+                      </span>
+                      <span className="tx-body">
+                        <span className="tx-name">{tx.description ?? "Untitled"}</span>
+                        <span className="tx-meta">
+                          {relatedFundName(tx.funds)} · {tx.category ?? "Uncategorised"} ·{" "}
+                          {formatDate(tx.date)}
+                        </span>
+                      </span>
+                      {/* The sign is spelled out as well as coloured, so
+                          direction survives greyscale and colour blindness. */}
+                      <span className={`num tx-amt ${isIncome ? "num-pos" : "num-neg"}`}>
+                        {isIncome ? "+" : "−"}
+                        {formatGBP(tx.amount_pence)}
+                      </span>
+                    </Link>
                   );
                 })}
               </div>
             )}
-          </div>
+          </Reveal>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+          <div className="stack">
             {/* ── Fund allocation ── */}
-            <div className="card">
+            <Reveal className="card" delay={0.04}>
               <div className="card-head">
-                <div className="card-title">Fund allocation</div>
-                <Link href="/dashboard/funds" className="card-link">Manage →</Link>
+                <div>
+                  <h2 className="card-title">Fund allocation</h2>
+                  <div className="card-sub">
+                    {totalFundsPence > 0
+                      ? `${formatGBP(totalFundsPence)} across ${funds.length} ${funds.length === 1 ? "fund" : "funds"}`
+                      : "Restricted and unrestricted balances"}
+                  </div>
+                </div>
+                <Link href="/dashboard/funds" className="card-link">
+                  Manage
+                  <ArrowRight size={13} aria-hidden="true" />
+                </Link>
               </div>
+
               {funds.length === 0 ? (
-                <div style={{ padding: "1rem 0", textAlign: "center" }}>
-                  <p style={{ fontSize: ".78rem", color: "var(--stone2)", marginBottom: ".8rem" }}>No fund accounts set up yet.</p>
-                  <Link href="/dashboard/funds/new" className="btn btn-outline btn-sm">+ Create fund</Link>
+                <div className="empty">
+                  <div className="empty-icon">
+                    <Wallet size={18} strokeWidth={1.8} aria-hidden="true" />
+                  </div>
+                  <div className="empty-title">No fund accounts</div>
+                  <p className="empty-body">
+                    Funds keep restricted giving separate from general income —
+                    required for most denominational returns.
+                  </p>
+                  <Link href="/dashboard/funds/new" className="btn btn-outline btn-sm">
+                    <Plus aria-hidden="true" />
+                    Create fund
+                  </Link>
                 </div>
               ) : (
                 <div className="fund-rows">
                   {funds.map((fund, i) => {
-                    const pct = totalFundsPence > 0
-                      ? Math.round(((fund.balance_pence ?? 0) / totalFundsPence) * 100)
-                      : 0;
+                    const fraction =
+                      totalFundsPence > 0 ? (fund.balance_pence ?? 0) / totalFundsPence : 0;
                     return (
                       <div key={fund.id}>
                         <div className="fund-head">
                           <span className="fund-nm">{fund.name}</span>
-                          <span className="fund-vl">{pct}%</span>
+                          <span className="fund-vl">{formatGBP(fund.balance_pence ?? 0)}</span>
                         </div>
-                        <div className="fund-bar">
-                          <div className="fund-fill" style={{ width: `${pct}%`, background: FUND_BAR_COLOURS[i % FUND_BAR_COLOURS.length] }} />
-                        </div>
+                        <Meter
+                          fraction={fraction}
+                          color={FUND_BAR_COLOURS[i % FUND_BAR_COLOURS.length]}
+                          label={`${fund.name} share of total funds`}
+                        />
                       </div>
                     );
                   })}
                 </div>
               )}
-            </div>
+            </Reveal>
 
-            {/* ── Quick stats ── */}
-            <div className="card">
+            {/* ── Gift Aid position ── */}
+            <Reveal className="card" delay={0.04}>
               <div className="card-head">
-                <div className="card-title">Quick stats</div>
-                <Link href="/dashboard/members" className="card-link">Members →</Link>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: ".85rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: ".83rem", color: "var(--ink2)" }}>Total members</span>
-                  <strong style={{ fontFamily: "var(--font-serif)", fontSize: "1.1rem", color: "var(--forest)" }}>{totalMembers}</strong>
+                <div>
+                  <h2 className="card-title">Gift Aid position</h2>
+                  <div className="card-sub">Claimable against {shortMonth} giving</div>
                 </div>
-                <div style={{ height: 1, background: "var(--parchment2)" }} />
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: ".83rem", color: "var(--ink2)" }}>Gift Aid eligible</span>
-                  <div className="chip chip-sage">{giftAidMembers}</div>
-                </div>
-                <div style={{ height: 1, background: "var(--parchment2)" }} />
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: ".83rem", color: "var(--ink2)" }}>Est. Gift Aid claimable</span>
-                  <strong style={{ fontSize: ".9rem", color: "var(--sage)" }}>{formatGBP(giftAidClaimPence)}</strong>
-                </div>
-                <div style={{ height: 1, background: "var(--parchment2)" }} />
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: ".83rem", color: "var(--ink2)" }}>Transactions this month</span>
-                  <strong style={{ fontSize: ".9rem", color: "var(--forest)" }}>{Number(currentMonth.tx_count)}</strong>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Insight panel ── */}
-            <div className="ai-card">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: ".9rem" }}>
-                <div className="serif" style={{ color: "var(--cream)", fontSize: ".95rem", fontWeight: 600 }}>AI insights</div>
-                <div className="ai-badge">✨ Live</div>
+                <Link href="/dashboard/gift-aid" className="card-link">
+                  Claim
+                  <ArrowRight size={13} aria-hidden="true" />
+                </Link>
               </div>
 
-              {incomePence === 0 ? (
-                <div className="ai-insight">👋 Welcome to Steward! Add your first transaction to start seeing AI-powered financial insights here.</div>
+              <dl className="stat-list">
+                <div className="stat-row">
+                  <dt>Declarations on file</dt>
+                  <dd className="num">{giftAidMembers}</dd>
+                </div>
+                <div className="stat-row">
+                  <dt>Share of the roll</dt>
+                  <dd className="num">
+                    {totalMembers > 0
+                      ? `${Math.round((giftAidMembers / totalMembers) * 100)}%`
+                      : "—"}
+                  </dd>
+                </div>
+                <div className="stat-row">
+                  <dt>Estimated claim</dt>
+                  <dd className="num num-pos">{formatGBP(giftAidClaimPence)}</dd>
+                </div>
+                <div className="stat-row">
+                  <dt>{terms.giving} recorded</dt>
+                  <dd className="num">{txCount}</dd>
+                </div>
+              </dl>
+            </Reveal>
+
+            {/* ── Insights. A quiet advisor: states the position in plain
+                 terms and offers the next action. ── */}
+            <Reveal className="ai-card" delay={0.04}>
+              <div className="card-head">
+                <h2 className="card-title">Insights</h2>
+                <span className="ai-badge">
+                  <Sparkles size={11} strokeWidth={2} aria-hidden="true" />
+                  Live
+                </span>
+              </div>
+
+              {!hasActivity ? (
+                <p className="ai-insight">
+                  Nothing to read yet. Once a few transactions are in, this
+                  panel reports the month&apos;s position, flags categories
+                  running ahead of budget, and tells you what is left to
+                  reconcile.
+                </p>
               ) : (
                 <>
-                  <div className="ai-insight">
+                  <p className="ai-insight">
+                    <strong>{monthLabel}:</strong>{" "}
                     {netPence >= 0
-                      ? `📈 ${monthLabel}: income of ${formatGBP(incomePence)} against expenditure of ${formatGBP(expensePence)} — a net surplus of ${formatGBP(netPence)}.`
-                      : `⚠️ ${monthLabel}: expenditure of ${formatGBP(expensePence)} exceeds income of ${formatGBP(incomePence)} — a deficit of ${formatGBP(Math.abs(netPence))}.`}
-                  </div>
+                      ? `income of ${formatGBP(incomePence)} against expenditure of ${formatGBP(expensePence)} — a surplus of ${formatGBP(netPence)}.`
+                      : `expenditure of ${formatGBP(expensePence)} against income of ${formatGBP(incomePence)} — a deficit of ${formatGBP(Math.abs(netPence))}.`}
+                  </p>
+
+                  {sealState === "pending" && (
+                    <p className="ai-insight">
+                      <strong>This period is not closed.</strong>{" "}
+                      {period
+                        ? `${period.donation_count} donations totalling ${formatGBP(Number(period.total_pence))} are matched so far.`
+                        : "No donations have been matched to the bank feed yet."}{" "}
+                      <Link href="/dashboard/reconciliation" className="card-link">
+                        Reconcile {shortMonth}
+                      </Link>
+                    </p>
+                  )}
+
                   {giftAidMembers > 0 && (
-                    <div className="ai-insight">
-                      🎁 {giftAidMembers} member{giftAidMembers !== 1 ? "s have" : " has"} Gift Aid declarations on file.{" "}
-                      <Link href="/dashboard/reports" style={{ color: "var(--gold3)", fontWeight: 600 }}>Generate your HMRC claim →</Link>
-                    </div>
+                    <p className="ai-insight">
+                      <strong>
+                        {giftAidMembers} {giftAidMembers === 1 ? "member has" : "members have"}
+                      </strong>{" "}
+                      Gift Aid declarations on file, worth about{" "}
+                      {formatGBP(giftAidClaimPence)} on this month&apos;s giving.{" "}
+                      <Link href="/dashboard/reports" className="card-link">
+                        Generate HMRC claim
+                      </Link>
+                    </p>
                   )}
                 </>
               )}
 
-              <Link
-                href="/dashboard/ai"
-                className="btn btn-sm"
-                style={{ marginTop: ".8rem", background: "rgba(255,255,255,.1)", color: "var(--cream)", border: "1px solid rgba(255,255,255,.2)", display: "inline-block", fontSize: ".75rem" }}
-              >
-                Ask your books →
-              </Link>
-            </div>
+              <div className="card-foot">
+                <Link href="/dashboard/ai" className="btn btn-outline btn-sm">
+                  <Sparkles aria-hidden="true" />
+                  Ask your books
+                </Link>
+                <Link href="/dashboard/budget" className="btn btn-ghost btn-sm">
+                  <CalendarCheck aria-hidden="true" />
+                  Budget
+                </Link>
+              </div>
+            </Reveal>
           </div>
         </div>
       </div>

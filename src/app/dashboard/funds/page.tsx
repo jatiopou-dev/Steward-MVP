@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { FolderOpen, Plus } from "lucide-react";
 import Topbar from "@/components/dashboard/Topbar";
 import { getFunds, deleteFund, type Fund } from "@/app/actions/funds";
 import { FUND_TYPES, FUND_STATUSES } from "@/utils/domainOptions";
@@ -42,7 +43,8 @@ export default async function FundsPage() {
         subtitle="Restricted, unrestricted and designated funds"
         actions={
           <Link href="/dashboard/funds/new" className="btn btn-forest btn-sm">
-            + New fund
+                <Plus aria-hidden="true" />
+                New fund
           </Link>
         }
       />
@@ -70,17 +72,20 @@ export default async function FundsPage() {
         </div>
 
         {funds.length === 0 ? (
-          <div className="card" style={{ padding: "3rem", textAlign: "center" }}>
-            <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📂</div>
-            <h3 style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", marginBottom: ".5rem" }}>
+          <div className="card empty">
+            <div className="empty-icon">
+                <FolderOpen size={18} strokeWidth={1.8} aria-hidden="true" />
+              </div>
+            <h3 className="empty-title">
               No fund accounts yet
             </h3>
-            <p style={{ fontSize: ".84rem", color: "var(--stone2)", marginBottom: "1.5rem" }}>
+            <p className="empty-body">
               Set up your fund accounts to track restricted, unrestricted, and
               designated funds — required for charity reporting.
             </p>
             <Link href="/dashboard/funds/new" className="btn btn-forest btn-sm">
-              + Create first fund
+                <Plus aria-hidden="true" />
+                Create first fund
             </Link>
           </div>
         ) : (
@@ -105,7 +110,7 @@ export default async function FundsPage() {
                         <div className="fund-bar">
                           <div
                             className="fund-fill"
-                            style={{ width: `${pct}%`, background: BAR_COLOURS[i % BAR_COLOURS.length] }}
+                            style={{ "--fill": pct / 100, background: BAR_COLOURS[i % BAR_COLOURS.length] } as React.CSSProperties}
                           />
                         </div>
                       </div>

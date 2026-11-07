@@ -36,7 +36,7 @@ export default function DemoGiving() {
 
         <div className="card">
           <div className="card-head"><div className="card-title">Giver register</div><div className="card-link">Export R68(i) →</div></div>
-          <p style={{ padding: "0 0 0.75rem", fontSize: "0.82rem", color: "var(--fg-muted)" }}>💡 Click Gift Aid status to toggle eligibility — reclaim estimate updates above.</p>
+          <p style={{ padding: "0 0 0.75rem", fontSize: "0.82rem", color: "var(--fg-muted)" }}>Select a Gift Aid status to toggle eligibility; the reclaim estimate above updates with it.</p>
           <table className="tbl">
             <thead><tr><th>Name</th><th>Frequency</th><th>Amount</th><th>YTD</th><th>Gift Aid (click to toggle)</th><th></th></tr></thead>
             <tbody>
@@ -52,7 +52,7 @@ export default function DemoGiving() {
                       className={`chip ${g.giftAid ? "chip-sage" : "chip-stone"}`}
                       style={{ cursor: "pointer", border: "none", background: "none", padding: 0 }}
                     >
-                      {g.giftAid ? "✅ Eligible" : "❌ Not declared"}
+                      {g.giftAid ? "Eligible" : "Not declared"}
                     </button>
                   </td>
                   <td>
@@ -60,7 +60,7 @@ export default function DemoGiving() {
                       className="btn btn-outline btn-sm"
                       style={{ color: "var(--rust)", borderColor: "var(--rust)" }}
                       onClick={() => dispatch({ type: "DELETE_GIVER", id: g.id })}
-                    >✕</button>
+                    >&times;</button>
                   </td>
                 </tr>
               ))}

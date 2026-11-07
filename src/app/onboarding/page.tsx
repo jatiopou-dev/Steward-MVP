@@ -14,24 +14,20 @@ export default function OnboardingPage() {
         <form action={createOrganization}>
           <div className="form-grp" style={{ marginBottom: "1.5rem" }}>
             <label htmlFor="name">Church / Organization Name</label>
-            <input 
-              type="text" 
-              id="name" 
-              name="name" 
-              placeholder="e.g. Grace Community Church" 
-              required 
-              style={{ width: "100%", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border)", backgroundColor: "var(--bg)" }}
+            {/* Sizing comes from .form-grp. Overriding the padding here
+                fought the control's fixed height and clipped the text. */}
+            <input
+              type="text"
+              id="name"
+              name="name"
+              placeholder="e.g. Grace Community Church"
+              required
             />
           </div>
 
           <div className="form-grp" style={{ marginBottom: "2rem" }}>
             <label htmlFor="denomination">Denomination</label>
-            <select 
-              id="denomination" 
-              name="denomination" 
-              required
-              style={{ width: "100%", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border)", backgroundColor: "var(--bg)" }}
-            >
+            <select id="denomination" name="denomination" required>
               <option value="baptist">Baptist</option>
               <option value="anglican">Anglican / Church of England</option>
               <option value="methodist">Methodist</option>

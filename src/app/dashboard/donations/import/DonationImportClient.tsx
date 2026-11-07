@@ -2,7 +2,10 @@
 
 import React, { useCallback, useRef, useState } from "react";
 import Papa from "papaparse";
-import { Upload, FileText, CheckCircle2, XCircle, AlertCircle, ChevronDown } from "lucide-react";
+import {
+  Upload, FileText, CheckCircle2, XCircle, AlertCircle, ChevronDown,
+  Bitcoin, CreditCard, Landmark, type LucideIcon,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,22 +32,22 @@ interface ImportResult {
   error?: string;
 }
 
-const SOURCE_CONFIG: Record<ImportSource, { label: string; icon: string; description: string; hint: string }> = {
+const SOURCE_CONFIG: Record<ImportSource, { label: string; icon: LucideIcon; description: string; hint: string }> = {
   bank_csv: {
     label: "Bank CSV",
-    icon: "🏦",
+    icon: Landmark,
     description: "Generic UK bank statement export",
     hint: "Expects: Date, Description, Credit/Amount, Reference columns",
   },
   stripe: {
     label: "Stripe",
-    icon: "💳",
+    icon: CreditCard,
     description: "Stripe dashboard payments export",
     hint: "Expects: id, created (UTC), amount, status, description columns",
   },
   crypto: {
     label: "The Giving Block",
-    icon: "₿",
+    icon: Bitcoin,
     description: "The Giving Block crypto settlement CSV",
     hint: "Expects: Settlement Date, Settlement Amount (GBP), Transaction ID, Donor Name",
   },
@@ -190,7 +193,9 @@ export default function DonationImportClient({ orgId }: { orgId: string }) {
                         : "border-border bg-card hover:border-ring"
                     )}
                   >
-                    <div className="text-xl mb-1">{cfg.icon}</div>
+                    <span className="avatar" aria-hidden="true">
+                      {React.createElement(cfg.icon, { size: 15, strokeWidth: 1.8 })}
+                    </span>
                     <div className="text-sm font-semibold" style={{ color: "var(--ink)" }}>
                       {cfg.label}
                     </div>
@@ -435,7 +440,7 @@ export default function DonationImportClient({ orgId }: { orgId: string }) {
                   onClick={handleImport}
                   disabled={importing || validRows.length === 0}
                   className="btn-forest"
-                  style={{ background: "var(--forest)", color: "var(--cream)" }}
+                  style={{ background: "var(--invert-surface)", color: "var(--invert-ink)" }}
                 >
                   {importing ? "Importing…" : `Import ${validRows.length} donations`}
                 </Button>

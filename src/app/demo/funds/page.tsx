@@ -48,7 +48,7 @@ export default function DemoFunds() {
                   <span className="fund-nm" style={{ fontWeight: 600 }}>{f.name} {f.restricted && <span className="chip chip-gold" style={{ marginLeft: 8, fontSize: "0.75rem" }}>Restricted</span>}</span>
                   <span style={{ fontWeight: 700 }}>£{f.balance.toLocaleString()}</span>
                 </div>
-                <div className="fund-bar"><div className="fund-fill" style={{ width: `${pct}%`, background: f.color }}></div></div>
+                <div className="fund-bar"><div className="fund-fill" style={{ "--fill": pct / 100, background: f.color } as React.CSSProperties}></div></div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem", color: "var(--fg-muted)", marginTop: 4 }}>
                   <span>{f.notes}</span><span>{pct}% of total</span>
                 </div>
@@ -79,7 +79,7 @@ export default function DemoFunds() {
             <div className="form-grp"><label>From fund</label><select value={form.from} onChange={e => setForm(f => ({ ...f, from: e.target.value }))} style={{ width: "100%", padding: "0.6rem", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }}>{state.funds.map(f => <option key={f.name}>{f.name} (£{f.balance.toLocaleString()})</option>)}</select></div>
             <div className="form-grp"><label>To fund</label><select value={form.to} onChange={e => setForm(f => ({ ...f, to: e.target.value }))} style={{ width: "100%", padding: "0.6rem", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }}>{state.funds.map(f => <option key={f.name}>{f.name}</option>)}</select></div>
             <div className="form-grp"><label>Amount (£)</label><input type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" style={{ width: "100%", padding: "0.6rem", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)" }} /></div>
-            {error && <div style={{ color: "var(--rust)", fontSize: "0.88rem" }}>⚠️ {error}</div>}
+            {error && <div style={{ color: "var(--rust)", fontSize: "0.88rem" }}>{error}</div>}
             <div style={{ display: "flex", gap: "0.75rem" }}>
               <button className="btn btn-forest" style={{ flex: 1 }} onClick={doTransfer}>Confirm Transfer</button>
               <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => { setShowModal(false); setError(""); }}>Cancel</button>

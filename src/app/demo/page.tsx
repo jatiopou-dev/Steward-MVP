@@ -1,7 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 import Topbar from "@/components/dashboard/Topbar";
+import { categoryIcon } from "@/lib/category-icons";
 import { useDenomination } from "@/contexts/DenominationContext";
 import { useDemoState, Tx } from "@/contexts/DemoStateContext";
 
@@ -28,7 +30,7 @@ export default function DemoOverview() {
       tx: {
         id: Date.now(),
         ico: form.type as "inc" | "exp",
-        emoji: form.type === "inc" ? "🎁" : "🏢",
+        category: form.category,
         name: form.name,
         meta: form.category,
         amt: display,
@@ -44,7 +46,7 @@ export default function DemoOverview() {
   return (
     <>
       <Topbar
-        title="Good morning 👋"
+        title="Overview"
         subtitle={`Grace ${terms.label} Church · April 2026`}
         actions={
           <>
@@ -92,12 +94,14 @@ export default function DemoOverview() {
             <div className="tx-list">
               {state.transactions.slice(0, 5).map((tx) => (
                 <div className="tx" key={tx.id}>
-                  <div className={`tx-ico ${tx.ico}`}>{tx.emoji}</div>
+                  <span className="avatar" aria-hidden="true">
+                    {React.createElement(categoryIcon(tx.category, tx.ico !== "exp"), { size: 15, strokeWidth: 1.8 })}
+                  </span>
                   <div className="tx-body">
                     <div className="tx-name">{tx.name}</div>
                     <div className="tx-meta">{tx.meta}</div>
                   </div>
-                  <div className={`tx-amt ${tx.ico}`}>{tx.amt}</div>
+                  <div className={`num tx-amt ${tx.ico === "exp" ? "num-neg" : "num-pos"}`}>{tx.amt}</div>
                   {tx.chip && <div className={`chip ${tx.chipCls}`}>{tx.chip}</div>}
                 </div>
               ))}
@@ -120,7 +124,7 @@ export default function DemoOverview() {
                         <span className="fund-vl">{pct}%</span>
                       </div>
                       <div className="fund-bar">
-                        <div className="fund-fill" style={{ width: `${pct}%`, background: f.color }}></div>
+                        <div className="fund-fill" style={{ "--fill": pct / 100, background: f.color } as React.CSSProperties}></div>
                       </div>
                     </div>
                   );
@@ -129,20 +133,23 @@ export default function DemoOverview() {
             </div>
 
             <div className="ai-card">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: ".9rem" }}>
-                <div className="serif" style={{ color: "var(--cream)", fontSize: ".95rem", fontWeight: 600 }}>AI insights</div>
-                <div className="ai-badge">✨ Live</div>
+              <div className="card-head">
+                <h2 className="card-title">Insights</h2>
+                <span className="ai-badge">
+                  <Sparkles size={11} strokeWidth={2} aria-hidden="true" />
+                  Live
+                </span>
               </div>
               <div className="ai-insight">
-                📈 Giving is 11% ahead of last April. At this rate you will exceed your annual income target by approximately{" "}
-                <strong style={{ color: "var(--gold3)" }}>£8,400</strong>.
+                <strong>Giving is 11% ahead of last April.</strong> At this rate
+                you will exceed the annual income target by roughly £8,400.
               </div>
               <div className="ai-insight">
-                ⚠️ Building fund repair work is scheduled for June. At current rate, the fund covers the estimated £12,000 cost with £3,200 to spare.
+                Building fund repair work is scheduled for June. At the current rate the fund covers the estimated £12,000 cost, with £3,200 to spare.
               </div>
               {state.payrollRan && (
                 <div className="ai-insight">
-                  ✅ Payroll processed for this month. All staff payments posted to Salaries fund.
+                  Payroll has been processed for this month. All staff payments are posted to the Salaries fund.
                 </div>
               )}
             </div>

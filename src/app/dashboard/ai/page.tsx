@@ -1,4 +1,6 @@
 "use client";
+
+import { FolderOpen } from "lucide-react";
 import React, { useState } from "react";
 import Topbar from "@/components/dashboard/Topbar";
 import { useDenomination } from "@/contexts/DenominationContext";
@@ -63,7 +65,9 @@ export default function AIPage() {
           <div className="card">
             <div className="card-head"><div className="card-title">Upload bank statement</div></div>
             <div className="upload-zone" style={{ cursor: "pointer" }}>
-              <div style={{fontSize:"1.8rem",marginBottom:".6rem"}}>📁</div>
+              <div className="empty-icon">
+                <FolderOpen size={18} strokeWidth={1.8} aria-hidden="true" />
+              </div>
               <div style={{fontSize:".88rem",fontWeight:500,color:"var(--ink2)"}}>Drop bank statement here</div>
               <div style={{fontSize:".76rem",color:"var(--stone2)",marginTop:".25rem"}}>CSV, PDF, OFX · AI will auto-categorise all transactions</div>
             </div>
@@ -73,13 +77,13 @@ export default function AIPage() {
           <div className="ai-card" style={{ display: "flex", flexDirection: "column", maxHeight: "600px" }}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:".9rem"}}>
               <div className="serif" style={{color:"var(--cream)",fontSize:".98rem",fontWeight:600}}>Ask your books</div>
-              <div className="ai-badge">✨ Claude AI</div>
+              <div className="ai-badge">Claude AI</div>
             </div>
             
             <div style={{ flex: 1, overflowY: "auto", marginBottom: "1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
               {messages.length === 0 ? (
                 <div className="ai-insight">
-                  👋 Ask anything about your finances. Try:<br/><br/>
+                  Ask anything about your finances. Try:<br/><br/>
                   <em>&quot;How much did we spend on worship this year?&quot;</em><br/>
                   <em>&quot;Are we on track with the building fund?&quot;</em><br/>
                   <em>&quot;What&apos;s our Gift Aid claimable this quarter?&quot;</em>

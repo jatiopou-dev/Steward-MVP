@@ -8,11 +8,20 @@ const Textarea = React.forwardRef<
 >(({ className, ...props }, ref) => {
   return (
     <textarea
+      ref={ref}
       className={cn(
-        "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "flex min-h-[92px] w-full resize-y rounded-[var(--r-sm)]",
+        "border border-[var(--line-strong)] bg-[var(--surface)]",
+        "p-3 text-[var(--t-md)] leading-[var(--lh-md)] text-[var(--ink)]",
+        "transition-[border-color,box-shadow] duration-[160ms] ease-[var(--e-sharp)]",
+        "placeholder:text-[var(--ink-3)]",
+        "hover:border-[var(--n-400)]",
+        "focus-visible:outline-none focus-visible:border-[var(--accent)]",
+        "focus-visible:shadow-[0_0_0_3px_color-mix(in_oklch,var(--accent)_18%,transparent)]",
+        "aria-[invalid=true]:border-[var(--neg)]",
+        "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-[var(--bg-sunken)]",
         className
       )}
-      ref={ref}
       {...props}
     />
   )

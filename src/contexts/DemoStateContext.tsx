@@ -7,7 +7,8 @@ import React, { createContext, useContext, useReducer, ReactNode } from "react";
 export type Tx = {
   id: number;
   ico: "inc" | "exp" | "res";
-  emoji: string;
+  /** Transaction category; resolved to an icon by lib/category-icons. */
+  category: string;
   name: string;
   meta: string;
   amt: string;
@@ -59,13 +60,13 @@ export type DemoState = {
 
 export const INITIAL_STATE: DemoState = {
   transactions: [
-    { id: 1, ico: "inc", emoji: "🎁", name: "Sunday offering — 27 Apr", meta: "General Fund · Plate offering", amt: "+£3,840", pence: 384000, chip: "AI categorised", chipCls: "chip-sage" },
-    { id: 2, ico: "res", emoji: "💰", name: "National Lottery Community Fund", meta: "Restricted · Community outreach fund", amt: "+£5,000", pence: 500000, chip: "Restricted", chipCls: "chip-gold" },
-    { id: 3, ico: "exp", emoji: "🏢", name: "Building maintenance — Apex Ltd", meta: "Facilities", amt: "-£1,200", pence: -120000, chip: "", chipCls: "" },
-    { id: 4, ico: "inc", emoji: "🎁", name: "Covenanted giving — April batch", meta: "General Fund · 48 standing orders", amt: "+£4,800", pence: 480000, chip: "Auto", chipCls: "chip-sage" },
-    { id: 5, ico: "exp", emoji: "💼", name: "Pastor payroll — April", meta: "Salaries", amt: "-£5,400", pence: -540000, chip: "", chipCls: "" },
-    { id: 6, ico: "inc", emoji: "🎁", name: "Gift Day — Easter appeal", meta: "Building fund · One-off gifts", amt: "+£2,840", pence: 284000, chip: "AI categorised", chipCls: "chip-sage" },
-    { id: 7, ico: "exp", emoji: "🎵", name: "Music equipment — worship team", meta: "Ministry · Capital purchase", amt: "-£680", pence: -68000, chip: "", chipCls: "" },
+    { id: 1, ico: "inc", category: "Regular giving", name: "Sunday offering — 27 Apr", meta: "General Fund · Plate offering", amt: "+£3,840", pence: 384000, chip: "AI categorised", chipCls: "chip-sage" },
+    { id: 2, ico: "res", category: "Grant", name: "National Lottery Community Fund", meta: "Restricted · Community outreach fund", amt: "+£5,000", pence: 500000, chip: "Restricted", chipCls: "chip-gold" },
+    { id: 3, ico: "exp", category: "Building & facilities", name: "Building maintenance — Apex Ltd", meta: "Facilities", amt: "-£1,200", pence: -120000, chip: "", chipCls: "" },
+    { id: 4, ico: "inc", category: "Regular giving", name: "Covenanted giving — April batch", meta: "General Fund · 48 standing orders", amt: "+£4,800", pence: 480000, chip: "Auto", chipCls: "chip-sage" },
+    { id: 5, ico: "exp", category: "Payroll & wages", name: "Pastor payroll — April", meta: "Salaries", amt: "-£5,400", pence: -540000, chip: "", chipCls: "" },
+    { id: 6, ico: "inc", category: "Special offering", name: "Gift Day — Easter appeal", meta: "Building fund · One-off gifts", amt: "+£2,840", pence: 284000, chip: "AI categorised", chipCls: "chip-sage" },
+    { id: 7, ico: "exp", category: "Worship & music", name: "Music equipment — worship team", meta: "Ministry · Capital purchase", amt: "-£680", pence: -68000, chip: "", chipCls: "" },
   ],
   members: [
     { id: 1, initials: "SA", name: "Sarah Anderson", bg: "var(--sage-bg)", color: "var(--sage)", status: "Active", statusCls: "chip-sage", since: 2014, giving: "£2,400", pence: 240000, giftAid: true },
@@ -84,10 +85,10 @@ export const INITIAL_STATE: DemoState = {
     { id: 6, name: "Rachel & Tom Brooks", freq: "Monthly SO", monthly: 100, ytd: 400, giftAid: true },
   ],
   funds: [
-    { name: "General Fund", balance: 42810, color: "var(--forest)", restricted: false, notes: "Day-to-day operations" },
-    { name: "Building Fund", balance: 18200, color: "var(--gold)", restricted: false, notes: "June renovation target: £12,000" },
-    { name: "Community Outreach", balance: 12300, color: "var(--sage)", restricted: true, notes: "National Lottery — restricted" },
-    { name: "Mission Giving", balance: 9050, color: "var(--stone2)", restricted: false, notes: "Partnership with 3 overseas missions" },
+    { name: "General Fund", balance: 42810, color: "var(--a-500)", restricted: false, notes: "Day-to-day operations" },
+    { name: "Building Fund", balance: 18200, color: "var(--a-400)", restricted: false, notes: "June renovation target: £12,000" },
+    { name: "Community Outreach", balance: 12300, color: "var(--seal)", restricted: true, notes: "National Lottery — restricted" },
+    { name: "Mission Giving", balance: 9050, color: "var(--n-400)", restricted: false, notes: "Partnership with 3 overseas missions" },
   ],
   payrollRan: false,
 };

@@ -1,23 +1,37 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Lexend } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
+/**
+ * One family carries the whole interface — headings, labels, data.
+ * Product UI does not need a display/body pairing; the second face
+ * exists only so money and counts can be tabular and column-aligned.
+ */
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"]
+  display: "swap",
 });
 
-const lexend = Lexend({
-  variable: "--font-dm-sans",
+const mono = JetBrains_Mono({
+  variable: "--font-mono-tabular",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
   title: "Steward — Church Finance, Faithfully Managed",
   description: "Church finance software built natively for every denomination.",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fafafb" },
+    { media: "(prefers-color-scheme: dark)", color: "#1f2024" },
+  ],
 };
 
 export default function RootLayout({
@@ -28,7 +42,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${cormorant.variable} ${lexend.variable} antialiased`}
+      className={`${inter.variable} ${mono.variable} antialiased`}
     >
       <body>{children}</body>
     </html>

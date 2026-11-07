@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Topbar from "@/components/dashboard/Topbar";
+import { categoryIcon } from "@/lib/category-icons";
 import { useDemoState, Tx } from "@/contexts/DemoStateContext";
 
 const CATEGORIES = ["General Fund", "Building Fund", "Missions Outreach", "Restricted", "Salaries", "Facilities", "Ministry"];
@@ -54,7 +55,7 @@ export default function DemoTransactions() {
         tx: {
           id: Date.now(),
           ico: form.type as "inc" | "exp",
-          emoji: form.type === "inc" ? "🎁" : "🏢",
+          category: form.category,
           name: form.name,
           meta: form.category,
           amt: display,
@@ -102,7 +103,9 @@ export default function DemoTransactions() {
               <div style={{ padding: "2rem", textAlign: "center", color: "var(--fg-muted)" }}>No transactions match your search.</div>
             ) : filtered.map((tx) => (
               <div className="tx" key={tx.id} style={{ cursor: "pointer" }} onClick={() => openEdit(tx)}>
-                <div className={`tx-ico ${tx.ico}`}>{tx.emoji}</div>
+                <span className="avatar" aria-hidden="true">
+                    {React.createElement(categoryIcon(tx.category, tx.ico !== "exp"), { size: 15, strokeWidth: 1.8 })}
+                  </span>
                 <div className="tx-body">
                   <div className="tx-name">{tx.name}</div>
                   <div className="tx-meta">{tx.meta}</div>
@@ -114,7 +117,7 @@ export default function DemoTransactions() {
                   style={{ marginLeft: "0.5rem", color: "var(--rust)", borderColor: "var(--rust)", fontSize: "0.8rem" }}
                   onClick={e => { e.stopPropagation(); dispatch({ type: "DELETE_TX", id: tx.id }); }}
                 >
-                  ✕
+                  &times;
                 </button>
               </div>
             ))}

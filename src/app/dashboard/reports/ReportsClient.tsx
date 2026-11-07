@@ -1,5 +1,6 @@
 "use client";
 
+import { BarChart3, FolderOpen, HandCoins, Landmark, type LucideIcon } from "lucide-react";
 import React, { useState } from "react";
 import type { MonthSummary, MemberGivingRow, FundRow } from "./page";
 
@@ -56,11 +57,11 @@ function buildFundsCsv(funds: FundRow[]): string {
 
 type ReportId = "monthly" | "givers" | "funds" | "gift-aid";
 
-const REPORTS: { id: ReportId; label: string; description: string; icon: string }[] = [
-  { id: "monthly", label: "Income & Expenditure", description: "Monthly breakdown of income and expenditure", icon: "📊" },
-  { id: "givers", label: "Giving by Member", description: "Year-to-date giving per member with Gift Aid status", icon: "🙏" },
-  { id: "funds", label: "Fund Balances", description: "Current balance of all fund accounts", icon: "📂" },
-  { id: "gift-aid", label: "Gift Aid Claim (HMRC)", description: "HMRC Charities Online CSV for R68 submission", icon: "🏛" },
+const REPORTS: { id: ReportId; label: string; description: string; icon: LucideIcon }[] = [
+  { id: "monthly", label: "Income & Expenditure", description: "Monthly breakdown of income and expenditure", icon: BarChart3 },
+  { id: "givers", label: "Giving by Member", description: "Year-to-date giving per member with Gift Aid status", icon: HandCoins },
+  { id: "funds", label: "Fund Balances", description: "Current balance of all fund accounts", icon: FolderOpen },
+  { id: "gift-aid", label: "Gift Aid Claim (HMRC)", description: "HMRC Charities Online CSV for R68 submission", icon: Landmark },
 ];
 
 export default function ReportsClient({ orgName, monthly, givers, funds, giftAidCsv, claimablePence, claimableCount }: Props) {
@@ -104,7 +105,9 @@ export default function ReportsClient({ orgName, monthly, givers, funds, giftAid
                 width: "100%",
               }}
             >
-              <span style={{ fontSize: "1.4rem" }}>{r.icon}</span>
+              <span className="avatar" aria-hidden="true">
+                {React.createElement(r.icon, { size: 15, strokeWidth: 1.8 })}
+              </span>
               <div>
                 <div style={{ fontWeight: 600, fontSize: ".88rem", color: "var(--forest)" }}>{r.label}</div>
                 <div style={{ fontSize: ".76rem", color: "var(--stone2)", marginTop: ".15rem" }}>{r.description}</div>
@@ -117,7 +120,7 @@ export default function ReportsClient({ orgName, monthly, givers, funds, giftAid
               ⬇ Download CSV
             </button>
             <button className="btn btn-outline" style={{ flex: 1 }} onClick={handlePrint}>
-              🖨 Print
+              Print
             </button>
           </div>
         </div>
@@ -126,7 +129,7 @@ export default function ReportsClient({ orgName, monthly, givers, funds, giftAid
         <div className="card" style={{ flex: 1 }}>
           <div className="card-head">
             <div>
-              <div className="card-title">{currentReport.icon} {currentReport.label}</div>
+              <div className="card-title">{currentReport.label}</div>
               <div className="card-sub">{orgName} · As at {today}</div>
             </div>
           </div>

@@ -28,14 +28,13 @@ export default async function EditBudgetPage({
           <form
             key={category}
             action={setBudgetLine}
-            className="bgt-row"
-            style={{ alignItems: "center", gap: ".75rem" }}
+            className="bgt-edit-row"
           >
             <input type="hidden" name="fiscal_year" value={fiscalYear} />
             <input type="hidden" name="category" value={category} />
-            <div className="bgt-cat">
-              <label htmlFor={`amount-${category}`}>{category}</label>
-            </div>
+            <label className="bgt-edit-cat" htmlFor={`amount-${category}`}>
+              {category}
+            </label>
             <div style={{ display: "flex", alignItems: "center", gap: ".4rem" }}>
               <span style={{ color: "var(--stone2)" }}>£</span>
               <input

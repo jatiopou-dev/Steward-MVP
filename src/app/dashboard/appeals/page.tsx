@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { Megaphone, Plus } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import Topbar from "@/components/dashboard/Topbar";
@@ -41,7 +42,8 @@ export default async function AppealsPage() {
         subtitle={`${total} appeal${total !== 1 ? "s" : ""} · ${active} active`}
         actions={
           <Link href="/dashboard/appeals/new" className="btn btn-forest btn-sm">
-            + Create appeal
+                <Plus aria-hidden="true" />
+                Create appeal
           </Link>
         }
       />
@@ -76,17 +78,20 @@ export default async function AppealsPage() {
           </div>
 
           {appeals.length === 0 ? (
-            <div style={{ padding: "3rem", textAlign: "center" }}>
-              <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📣</div>
-              <h3 style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", marginBottom: ".5rem" }}>
+            <div className="empty">
+              <div className="empty-icon">
+                <Megaphone size={18} strokeWidth={1.8} aria-hidden="true" />
+              </div>
+              <h3 className="empty-title">
                 No appeals yet
               </h3>
-              <p style={{ fontSize: ".84rem", color: "var(--stone2)", marginBottom: "1.5rem" }}>
+              <p className="empty-body">
                 Appeals let you track donations against specific fundraising campaigns — a
                 building fund drive, a mission trip, or an emergency relief collection.
               </p>
               <Link href="/dashboard/appeals/new" className="btn btn-forest btn-sm">
-                + Create first appeal
+                <Plus aria-hidden="true" />
+                Create first appeal
               </Link>
             </div>
           ) : (

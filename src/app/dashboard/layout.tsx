@@ -26,16 +26,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Fetch the org's denomination so the whole dashboard uses it from the start
   const { data: org } = await supabase
     .from("organizations")
-    .select("denomination")
+    .select("name, denomination")
     .eq("id", profile.org_id)
     .single();
 
   const denomination = (org?.denomination as Denomination) ?? "independent";
+  const orgName = org?.name ?? "Your church";
 
   return (
     <DenominationProvider initialDenomination={denomination}>
       <div id="dashboard" className="screen active" style={{ flexDirection: "row" }}>
-        <Sidebar />
+        <Sidebar orgName={orgName} />
         <div className="main-area">
           {children}
         </div>

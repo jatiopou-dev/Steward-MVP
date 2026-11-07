@@ -228,7 +228,7 @@ export default function ReconciliationClient({ orgId, initialPeriods }: Reconcil
               <Button
                 onClick={handleClose}
                 disabled={isPending || alreadyClosed}
-                style={{ background: "var(--forest)", color: "var(--cream)" }}
+                style={{ background: "var(--invert-surface)", color: "var(--invert-ink)" }}
                 className="w-full"
               >
                 <Lock className="w-4 h-4 mr-2" />
@@ -358,7 +358,7 @@ export default function ReconciliationClient({ orgId, initialPeriods }: Reconcil
                                 className="mt-3 rounded px-2 py-1.5 text-xs font-mono"
                                 style={{ background: "var(--ink)", color: "var(--sage3)" }}
                               >
-                                ⛓ {period.anchor_tx_hash}
+                                {period.anchor_tx_hash}
                               </div>
                             )}
                           </div>

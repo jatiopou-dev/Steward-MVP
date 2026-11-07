@@ -13,10 +13,15 @@ function formatGBP(pence: number): string {
   }).format(pence / 100);
 }
 
-function barColour(line: BudgetReportLine): string {
-  if (line.over_budget) return "var(--rust)";
-  if (line.percent_used >= 85) return "var(--gold)";
-  return "var(--sage)";
+/**
+ * Three states, not two: a line at 90% has not broken the budget but is the
+ * one a treasurer needs to see coming. The colour is set in CSS from this
+ * attribute so the bar keeps its meaning in both themes.
+ */
+function barState(line: BudgetReportLine): "over" | "near" | "ok" {
+  if (line.over_budget) return "over";
+  if (line.percent_used >= 85) return "near";
+  return "ok";
 }
 
 export default async function BudgetPage({
@@ -117,52 +122,37 @@ function BudgetTable({
   lines: BudgetReportLine[];
   actualLabel: string;
 }) {
-  const headStyle: React.CSSProperties = {
-    fontSize: ".7rem",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: ".07em",
-    color: "var(--stone2)",
-  };
-
   return (
     <div className="card">
       <div className="card-head">
         <div className="card-title">{title}</div>
-      </div>
-      <div
-        className="bgt-row"
-        style={{
-          borderBottom: "1px solid var(--stone3)",
-          paddingBottom: ".5rem",
-          marginBottom: ".2rem",
-        }}
-      >
-        <div className="bgt-cat" style={headStyle}>Category</div>
-        <div className="bgt-track" style={headStyle}>Progress</div>
-        <div className="bgt-nums" style={headStyle}>{actualLabel}</div>
+        {/* What the pair of figures means — "Actual / Budget" for spend,
+            "Received / Target" for income. It reads once here rather than
+            as a column header: each row keeps the figures beside the
+            category, with the bar beneath them. */}
+        <div className="card-sub">{actualLabel}</div>
       </div>
       {lines.map((line) => (
         <div className="bgt-row" key={line.category}>
-          <div className="bgt-cat">{line.category}</div>
-          <div className="bgt-track">
-            <div className="fund-bar">
-              <div
-                className="fund-fill"
-                style={{
-                  width: `${Math.min(line.percent_used, 100)}%`,
-                  background: barColour(line),
-                }}
-              />
-            </div>
+          <div className="bgt-cat">
+            <span>{line.category}</span>
+            <span className="bgt-nums">
+              {formatGBP(line.actual_pence)} / {formatGBP(line.budget_pence)}
+              {line.over_budget && (
+                <span style={{ color: "var(--rust)", marginLeft: ".4rem" }}>
+                  +{formatGBP(line.actual_pence - line.budget_pence)}
+                </span>
+              )}
+            </span>
           </div>
-          <div className="bgt-nums">
-            {formatGBP(line.actual_pence)} / {formatGBP(line.budget_pence)}
-            {line.over_budget && (
-              <span style={{ color: "var(--rust)", marginLeft: ".4rem" }}>
-                +{formatGBP(line.actual_pence - line.budget_pence)}
-              </span>
-            )}
+          <div className="bgt-track">
+            <div
+              className="bgt-fill"
+              data-state={barState(line)}
+              style={{
+                "--fill": Math.min(line.percent_used, 100) / 100,
+              } as React.CSSProperties}
+            />
           </div>
         </div>
       ))}

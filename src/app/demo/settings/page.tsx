@@ -48,7 +48,7 @@ export default function DemoSettings() {
               <div className="setting-label">Congregation icon &amp; label</div>
               <div className="setting-desc">Used in the sidebar and org header.</div>
             </div>
-            <strong>{terms.icon} {terms.label}</strong>
+            <strong>{terms.label}</strong>
           </div>
 
           <div className="setting-row">
@@ -89,10 +89,10 @@ export default function DemoSettings() {
             <div className="serif" style={{ color: "var(--cream)", fontSize: ".95rem", fontWeight: 600 }}>
               Like what you see?
             </div>
-            <div className="ai-badge">✨ Sign up free</div>
+            <div className="ai-badge">Sign up free</div>
           </div>
           <div className="ai-insight">
-            🔓 Sign up to permanently configure your denomination, invite team members, connect your bank statements via CSV, and unlock your 14-day free trial.
+            Sign up to permanently configure your denomination, invite team members, connect your bank statements via CSV, and unlock your 14-day free trial.
           </div>
           <Link href="/auth" className="btn btn-gold btn-sm" style={{ marginTop: "1rem", display: "inline-block" }}>
             Create your account →

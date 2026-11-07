@@ -1,0 +1,518 @@
+/* ═══════════════════════════════════════════════════════════════
+   APP SHELL — the authenticated surface.
+   Every class here is consumed by the dashboard and demo routes.
+   Rules: no nested cards, no side-stripe accents, full borders,
+   feedback on pointer-down, translucent chrome with content
+   scrolling under it, money always tabular.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Frame ───────────────────────────────────────────────────── */
+.screen { display: none; min-height: 100vh; background: var(--bg); }
+/* Column is the default — the landing page stacks its sections. The
+   dashboard and demo shells override to row for the sidebar. */
+.screen.active { display: flex; flex-direction: column; }
+
+.main-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+.content { padding: var(--s-6) var(--s-8) var(--s-16); }
+@media (max-width: 860px) { .content { padding: var(--s-4) var(--s-4) var(--s-12); } }
+
+.two-col { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--s-5); align-items: start; }
+@media (max-width: 1100px) { .two-col { grid-template-columns: minmax(0, 1fr); } }
+
+/* ── Sidebar. Heavier material than content: it is structure. ─── */
+.sidebar {
+  width: 248px;
+  flex: 0 0 248px;
+  background: var(--mat-panel);
+  backdrop-filter: blur(var(--mat-blur)) saturate(160%);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s-3) var(--s-3) var(--s-4);
+  max-height: 100vh;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+}
+@media (max-width: 860px) {
+  .sidebar { position: fixed; inset: 0 auto 0 0; transform: translateX(-100%); transition: transform var(--d-normal) var(--e-out); box-shadow: var(--sh-4); }
+  .sidebar[data-open="true"] { transform: translateX(0); }
+}
+
+.sidebar-head { padding: var(--s-3) var(--s-2) var(--s-4); display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+
+/* Drawer controls exist only at the narrow breakpoint. Hiding them by
+   media query rather than by JS keeps the first paint correct. */
+.nav-trigger, .nav-close {
+  display: none;
+  align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background var(--d-fast) var(--e-sharp), transform var(--d-instant) var(--e-out);
+}
+.nav-trigger:active, .nav-close:active { transform: scale(0.94); }
+.nav-trigger {
+  position: fixed;
+  top: var(--s-3); left: var(--s-3);
+  z-index: var(--z-dropdown);
+  box-shadow: var(--sh-2);
+}
+.nav-close { border-color: transparent; background: transparent; }
+.nav-scrim {
+  display: none;
+  position: fixed; inset: 0;
+  z-index: var(--z-scrim);
+  background: var(--scrim);
+  backdrop-filter: blur(2px);
+  border: 0;
+}
+@media (max-width: 860px) {
+  .nav-trigger, .nav-close { display: inline-flex; }
+  .nav-scrim { display: block; }
+  .sidebar { z-index: var(--z-modal); }
+}
+
+.logo { display: flex; align-items: center; gap: var(--s-2); }
+.logo-icon {
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  border-radius: var(--r-sm);
+  background: var(--ink);
+  flex: none;
+}
+.logo-cross { width: 10px; height: 10px; background: var(--n-0); clip-path: polygon(40% 0,60% 0,60% 40%,100% 40%,100% 60%,60% 60%,60% 100%,40% 100%,40% 60%,0 60%,0 40%,40% 40%); }
+.logo-name { font-size: var(--t-lg); font-weight: 600; letter-spacing: var(--tr-snug); color: var(--ink); }
+.logo-name span { color: var(--accent); }
+
+.sidebar-org {
+  margin: 0 var(--s-1) var(--s-4);
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.sidebar-org strong { font-size: var(--t-md); font-weight: 600; color: var(--ink); letter-spacing: var(--tr-base); }
+.sidebar-org small { font-size: var(--t-xs); color: var(--ink-3); }
+.denom-tag {
+  margin-top: var(--s-2);
+  display: inline-flex; align-items: center; gap: var(--s-1); align-self: flex-start;
+  font-size: var(--t-xs); font-weight: 500;
+  padding: 2px var(--s-2);
+  border-radius: var(--r-pill);
+  background: var(--accent-soft); color: var(--accent-hover);
+}
+
+.nav-sec {
+  font-size: var(--t-xs); font-weight: 600;
+  letter-spacing: var(--tr-wide);
+  color: var(--ink-3);
+  padding: var(--s-4) var(--s-3) var(--s-1);
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-sm);
+  font-size: var(--t-md);
+  font-weight: 450;
+  color: var(--ink-2);
+  text-decoration: none;
+  position: relative;
+  transition: background var(--d-fast) var(--e-sharp), color var(--d-fast) var(--e-sharp);
+}
+.nav-item:hover { background: color-mix(in oklch, var(--ink) 5%, transparent); color: var(--ink); }
+.nav-item:active { background: color-mix(in oklch, var(--ink) 9%, transparent); }
+.nav-item.active { background: var(--accent-soft); color: var(--accent-hover); font-weight: 550; }
+.nav-item .ni { display: grid; place-items: center; width: 16px; height: 16px; flex: none; opacity: 0.75; }
+.nav-item.active .ni { opacity: 1; }
+
+.sidebar-foot { margin-top: auto; padding-top: var(--s-4); border-top: 1px solid var(--line); }
+
+/* ── Topbar. Floating translucent layer; content scrolls under. ── */
+.topbar {
+  position: sticky; top: 0;
+  z-index: var(--z-sticky);
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: var(--s-4); flex-wrap: wrap;
+  padding: var(--s-5) var(--s-8);
+  background: var(--mat-chrome);
+  backdrop-filter: blur(var(--mat-blur)) saturate(170%);
+  border-bottom: 1px solid var(--line);
+}
+/* At the narrow breakpoint the drawer trigger is fixed over this
+   corner, so the title indents to clear it rather than sitting under. */
+@media (max-width: 860px) { .topbar { padding: var(--s-4); padding-left: calc(var(--s-4) + 44px); } }
+.topbar-lead { min-width: 0; }
+.topbar-title { font-size: var(--t-2xl); font-weight: 600; letter-spacing: var(--tr-snug); color: var(--ink); line-height: var(--lh-2xl); }
+.topbar-sub { font-size: var(--t-md); color: var(--ink-3); margin-top: 2px; }
+.topbar-actions { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+
+/* ── Buttons. Press feedback is instant and on pointer-down. ───── */
+.btn {
+  --btn-bg: var(--surface);
+  --btn-fg: var(--ink);
+  --btn-line: var(--line-strong);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+  height: 36px; padding: 0 var(--s-4);
+  border: 1px solid var(--btn-line);
+  border-radius: var(--r-sm);
+  background: var(--btn-bg); color: var(--btn-fg);
+  font: inherit; font-size: var(--t-md); font-weight: 500;
+  letter-spacing: var(--tr-base);
+  text-decoration: none; white-space: nowrap; cursor: pointer;
+  transition: background var(--d-fast) var(--e-sharp), border-color var(--d-fast) var(--e-sharp),
+              transform var(--d-instant) var(--e-out), box-shadow var(--d-fast) var(--e-sharp);
+}
+.btn:hover { background: color-mix(in oklch, var(--btn-bg) 94%, var(--ink)); }
+.btn:active { transform: scale(0.975); }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.5; pointer-events: none; }
+.btn svg { width: 15px; height: 15px; flex: none; }
+
+.btn-sm { height: 30px; padding: 0 var(--s-3); font-size: var(--t-sm); }
+
+.btn-forest {
+  --btn-bg: var(--accent); --btn-fg: var(--ink-on-accent); --btn-line: transparent;
+  box-shadow: var(--sh-1);
+}
+.btn-forest:hover { background: var(--accent-hover); }
+
+.btn-gold { --btn-bg: var(--seal); --btn-fg: var(--n-0); --btn-line: transparent; }
+.btn-gold:hover { background: color-mix(in oklch, var(--seal) 88%, black); }
+
+.btn-outline { --btn-bg: transparent; --btn-fg: var(--ink-2); --btn-line: var(--line-strong); }
+.btn-ghost { --btn-bg: transparent; --btn-fg: var(--ink-2); --btn-line: transparent; }
+.btn-ghost:hover { background: color-mix(in oklch, var(--ink) 6%, transparent); }
+
+/* ── Cards. One level only — nested cards are always wrong. ────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+  box-shadow: var(--sh-1);
+}
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-4); }
+.card-title { font-size: var(--t-lg); font-weight: 600; letter-spacing: var(--tr-base); color: var(--ink); }
+.card-sub { font-size: var(--t-sm); color: var(--ink-3); margin-top: 2px; }
+.card-link {
+  font-size: var(--t-sm); font-weight: 500; color: var(--accent); text-decoration: none;
+  display: inline-flex; align-items: center; gap: var(--s-1);
+  transition: color var(--d-fast) var(--e-sharp);
+}
+.card-link:hover { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── KPIs. Figures carry the hierarchy, labels stay quiet. ─────── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+  gap: var(--s-4);
+  margin-bottom: var(--s-5);
+}
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-4) var(--s-5);
+  display: flex; flex-direction: column; gap: var(--s-1);
+  box-shadow: var(--sh-1);
+}
+.kpi-lbl {
+  font-size: var(--t-xs); font-weight: 600;
+  letter-spacing: var(--tr-wide);
+  color: var(--ink-3);
+  order: -1;
+}
+.kpi-val {
+  font-family: var(--font-mono-tabular), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+  font-size: var(--t-2xl); font-weight: 600;
+  letter-spacing: -0.028em;
+  line-height: var(--lh-2xl);
+  color: var(--ink);
+}
+.kpi-meta { font-size: var(--t-sm); color: var(--ink-3); display: flex; align-items: center; gap: var(--s-1); }
+.kpi-meta.up { color: var(--pos); }
+.kpi-meta.down { color: var(--neg); }
+.kpi-meta.neutral { color: var(--ink-3); }
+
+/* ── Chips. Status, not decoration. ───────────────────────────── */
+.chip {
+  display: inline-flex; align-items: center; gap: var(--s-1);
+  font-size: var(--t-xs); font-weight: 550;
+  letter-spacing: var(--tr-base);
+  padding: 2px var(--s-2);
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.chip-sage  { background: var(--pos-soft);  color: var(--pos);  border-color: color-mix(in oklch, var(--pos) 22%, transparent); }
+.chip-gold  { background: var(--warn-soft); color: var(--warn); border-color: color-mix(in oklch, var(--warn) 24%, transparent); }
+.chip-rust  { background: var(--neg-soft);  color: var(--neg);  border-color: color-mix(in oklch, var(--neg) 22%, transparent); }
+.chip-stone { background: var(--bg-sunken); color: var(--ink-3); border-color: var(--line); }
+
+/* ── Tables. Dense is correct here; alignment does the work. ──── */
+.tbl { width: 100%; border-collapse: collapse; font-size: var(--t-md); }
+.tbl th {
+  text-align: left;
+  font-size: var(--t-xs); font-weight: 600;
+  letter-spacing: var(--tr-wide);
+  color: var(--ink-3);
+  padding: var(--s-2) var(--s-3);
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0;
+  background: var(--surface);
+  z-index: var(--z-raised);
+}
+.tbl td { padding: var(--s-3); border-bottom: 1px solid var(--line); color: var(--ink-2); vertical-align: middle; }
+.tbl tbody tr { transition: background var(--d-fast) var(--e-sharp); }
+.tbl tbody tr:hover { background: var(--bg-sunken); }
+.tbl tbody tr:last-child td { border-bottom: 0; }
+/* Any cell holding money or a count aligns right and goes tabular. */
+.tbl td.num, .tbl th.num { text-align: right; }
+
+/* ── Transaction list ─────────────────────────────────────────── */
+.tx-list { display: flex; flex-direction: column; }
+.tx {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-3) var(--s-2);
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  transition: background var(--d-fast) var(--e-sharp);
+}
+.tx:last-child { border-bottom: 0; }
+.tx:hover { background: var(--bg-sunken); }
+.tx-body { flex: 1; min-width: 0; }
+.tx-name { font-size: var(--t-md); font-weight: 500; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tx-meta { font-size: var(--t-xs); color: var(--ink-3); margin-top: 1px; }
+
+/* The amount column is fixed-width and right-aligned so figures stack
+   in a true column — a trailing chip on one row must not shunt the
+   next row's decimal point out of line. */
+.tx-amt {
+  font-size: var(--t-md); font-weight: 600;
+  flex: none;
+  min-width: 7.5rem;
+  text-align: right;
+}
+/* Reserve the status slot whether or not the row has one, for the
+   same reason. */
+.tx > .chip { flex: none; min-width: 6.5rem; justify-content: center; }
+
+/* Vertical panel stack. Gap varies from the grid gap so the column
+   reads as one group rather than as three loose cards. */
+.stack { display: flex; flex-direction: column; gap: var(--s-5); min-width: 0; }
+
+/* ── Definition rows. A label/figure pair aligned on a rule, which is
+   how a statement is read — not a nested card per statistic. ── */
+.stat-list { display: flex; flex-direction: column; }
+.stat-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+.stat-row:last-child { border-bottom: 0; }
+.stat-row dt { font-size: var(--t-md); color: var(--ink-2); }
+.stat-row dd { font-size: var(--t-md); font-weight: 600; color: var(--ink); }
+
+.empty-actions { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; justify-content: center; margin-top: var(--s-1); }
+
+.card-foot { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--line); }
+
+.avatar {
+  width: 32px; height: 32px; flex: none;
+  display: grid; place-items: center;
+  border-radius: var(--r-sm);
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: var(--t-sm); font-weight: 600;
+}
+.avatar svg { width: 15px; height: 15px; }
+
+/* ── Fund allocation. The bar is the data, not an ornament. ───── */
+.fund-rows { display: flex; flex-direction: column; gap: var(--s-4); }
+.fund-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-2); }
+.fund-nm { font-size: var(--t-md); font-weight: 500; color: var(--ink); }
+.fund-vl {
+  font-family: var(--font-mono-tabular), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-md); font-weight: 600; color: var(--ink);
+}
+.fund-bar { height: 6px; border-radius: var(--r-pill); background: var(--bg-sunken); overflow: hidden; }
+/* Meters size by scaleX, never by animating width: the track's pill
+   radius clips the square fill, so the caps still read as rounded. */
+.fund-fill {
+  height: 100%; width: 100%;
+  background: var(--accent);
+  transform-origin: left center;
+  transform: scaleX(var(--fill, 0));
+  transition: transform var(--d-slow) var(--e-out);
+}
+
+/* ── Budget rows ──────────────────────────────────────────────── */
+.bgt-row { display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
+.bgt-row:last-child { border-bottom: 0; }
+.bgt-cat { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); font-size: var(--t-md); color: var(--ink); }
+.bgt-track { height: 6px; border-radius: var(--r-pill); background: var(--bg-sunken); overflow: hidden; }
+.bgt-fill {
+  height: 100%; width: 100%;
+  background: var(--accent);
+  transform-origin: left center;
+  transform: scaleX(var(--fill, 0));
+  transition: transform var(--d-slow) var(--e-out);
+}
+.bgt-fill[data-state="near"] { background: var(--warn); }
+.bgt-fill[data-state="over"] { background: var(--neg); }
+
+/* One category per line while setting budgets: name on the left, the
+   amount and its Save against the right edge. A row, unlike .bgt-row
+   above — that one stacks so the progress bar can run full width. */
+.bgt-edit-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+.bgt-edit-row:last-child { border-bottom: 0; }
+.bgt-edit-cat { flex: 1; font-size: var(--t-md); color: var(--ink); }
+
+/* Money sits against the category it belongs to, on the ledger figures
+   so the slash lines up from row to row. */
+.bgt-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+/* ── AI panel. Reads as a quiet advisor, not a chatbot ad. ────── */
+.ai-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+  box-shadow: var(--sh-1);
+}
+.ai-badge {
+  display: inline-flex; align-items: center; gap: var(--s-1);
+  font-size: var(--t-xs); font-weight: 600; letter-spacing: var(--tr-wide);
+  color: var(--seal);
+  padding: 2px var(--s-2);
+  border: 1px solid color-mix(in oklch, var(--seal) 26%, transparent);
+  border-radius: var(--r-pill);
+  background: var(--seal-soft);
+}
+.ai-insight {
+  font-size: var(--t-md);
+  line-height: var(--lh-md);
+  color: var(--ink-2);
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+.ai-insight:last-child { border-bottom: 0; }
+.ai-insight strong { color: var(--ink); font-weight: 600; }
+
+/* ── Forms. Inline validation, never a wall of errors on submit. ─ */
+.form-grp { display: flex; flex-direction: column; gap: var(--s-2); margin-bottom: var(--s-4); }
+.form-grp > label { font-size: var(--t-md); font-weight: 500; color: var(--ink); }
+.form-grp input, .form-grp select, .form-grp textarea {
+  width: 100%;
+  height: 38px; padding: 0 var(--s-3);
+  font: inherit; font-size: var(--t-md);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  transition: border-color var(--d-fast) var(--e-sharp), box-shadow var(--d-fast) var(--e-sharp);
+}
+.form-grp textarea { height: auto; min-height: 92px; padding: var(--s-3); line-height: var(--lh-md); resize: vertical; }
+.form-grp input:hover, .form-grp select:hover, .form-grp textarea:hover { border-color: var(--n-400); }
+.form-grp input:focus, .form-grp select:focus, .form-grp textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 18%, transparent);
+}
+.form-grp input[aria-invalid="true"], .form-grp select[aria-invalid="true"], .form-grp textarea[aria-invalid="true"] { border-color: var(--neg); }
+.form-hint { font-size: var(--t-xs); color: var(--ink-3); }
+.form-hint[data-error="true"] { color: var(--neg); }
+
+/* ── Settings rows ────────────────────────────────────────────── */
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-4) 0;
+  border-bottom: 1px solid var(--line);
+}
+.setting-row:last-child { border-bottom: 0; }
+.setting-label { font-size: var(--t-md); font-weight: 500; color: var(--ink); }
+.setting-desc { font-size: var(--t-sm); color: var(--ink-3); margin-top: 2px; max-width: 62ch; }
+
+/* ── Empty + loading states. Teach the interface, don't shrug. ── */
+.empty {
+  display: flex; flex-direction: column; align-items: center; gap: var(--s-3);
+  padding: var(--s-12) var(--s-6);
+  text-align: center;
+}
+.empty-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: var(--r-md); background: var(--bg-sunken); border: 1px solid var(--line); color: var(--ink-3); }
+.empty-title { font-size: var(--t-lg); font-weight: 600; color: var(--ink); }
+.empty-body { font-size: var(--t-md); color: var(--ink-3); max-width: 46ch; }
+
+.skeleton {
+  border-radius: var(--r-sm);
+  background: linear-gradient(90deg, var(--bg-sunken) 0%, var(--n-100) 50%, var(--bg-sunken) 100%);
+  background-size: 200% 100%;
+  animation: skeleton 1.4s var(--e-sharp) infinite;
+}
+@keyframes skeleton { to { background-position: -200% 0; } }
+
+/* ── Integrity seal: the period's reconciliation state, live. ──── */
+.seal {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  padding: var(--s-1) var(--s-3) var(--s-1) var(--s-2);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: var(--t-xs); font-weight: 550;
+  color: var(--ink-2);
+}
+.seal-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); flex: none; }
+.seal[data-state="verified"] { border-color: color-mix(in oklch, var(--pos) 30%, transparent); background: var(--pos-soft); color: var(--pos); }
+.seal[data-state="verified"] .seal-dot { background: var(--pos); }
+.seal[data-state="pending"] { border-color: color-mix(in oklch, var(--warn) 30%, transparent); background: var(--warn-soft); color: var(--warn); }
+.seal[data-state="pending"] .seal-dot { background: var(--warn); }
+.seal-meter { width: 48px; height: 4px; border-radius: var(--r-pill); background: color-mix(in oklch, currentColor 18%, transparent); overflow: hidden; }
+.seal-meter i {
+  display: block; height: 100%; width: 100%;
+  background: currentColor;
+  transform-origin: left center;
+  transform: scaleX(var(--fill, 0));
+  transition: transform var(--d-slow) var(--e-out);
+}
+
+/* ── Utilities ────────────────────────────────────────────────── */
+.serif { font-family: var(--font-inter), ui-sans-serif, sans-serif; font-weight: 600; letter-spacing: var(--tr-snug); }
+@media print {
+  .no-print, .sidebar, .topbar-actions { display: none !important; }
+  .main-area { max-height: none; overflow: visible; }
+  .card, .kpi { box-shadow: none; border-color: var(--n-300); }
+}

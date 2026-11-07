@@ -4,12 +4,12 @@ import Topbar from "@/components/dashboard/Topbar";
 
 const scriptedReplies: Record<string, string> = {
   default: "I'm Steward AI, your church finance assistant. Ask me anything about your finances, Gift Aid, or reports!",
-  giving: "📈 Covenanted giving is up 8% this quarter. You have 48 active standing orders totalling £4,800/month. Your top 5 givers account for 34% of income.",
-  "gift aid": "✅ You have 127 Gift Aid-eligible members. Based on this year's declared giving of £68,400, your estimated Gift Aid reclaim is **£17,100**. I can prepare your R68(i) claim now.",
-  budget: "📊 You are 92% through your Q1 budget. Facilities spend is 14% over forecast due to the boiler repair in February. I recommend a £1,200 transfer from reserves.",
-  surplus: "💷 Your net surplus for April is £5,340 — £1,100 ahead of last April. At this trajectory, you'll end the financial year with a £12,800 surplus.",
-  report: "📄 I can generate: (1) Monthly treasurer report, (2) Q1 board summary, (3) Annual accounts draft, or (4) HMRC Gift Aid R68(i). Which would you like?",
-  payroll: "💼 April payroll: Pastor £3,800 + Church Administrator £1,600 = £5,400 total. NI employer contributions: £612. PAYE due to HMRC by 19th May.",
+  giving: "Covenanted giving is up 8% this quarter. You have 48 active standing orders totalling £4,800/month. Your top 5 givers account for 34% of income.",
+  "gift aid": "You have 127 Gift Aid-eligible members. Based on this year's declared giving of £68,400, your estimated Gift Aid reclaim is **£17,100**. I can prepare your R68(i) claim now.",
+  budget: "You are 92% through your Q1 budget. Facilities spend is 14% over forecast due to the boiler repair in February. I recommend a £1,200 transfer from reserves.",
+  surplus: "Your net surplus for April is £5,340 — £1,100 ahead of last April. At this trajectory, you'll end the financial year with a £12,800 surplus.",
+  report: "I can generate: (1) Monthly treasurer report, (2) Q1 board summary, (3) Annual accounts draft, or (4) HMRC Gift Aid R68(i). Which would you like?",
+  payroll: "April payroll: Pastor £3,800 + Church Administrator £1,600 = £5,400 total. NI employer contributions: £612. PAYE due to HMRC by 19th May.",
 };
 
 function getReply(msg: string): string {
@@ -22,7 +22,7 @@ function getReply(msg: string): string {
 
 export default function DemoAI() {
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hello! I'm Steward AI 🤖 — your intelligent church finance assistant. Ask me about giving trends, Gift Aid, payroll, budgets, or ask me to draft a report." }
+    { role: "assistant", content: "Hello! I'm Steward AI, your church finance assistant. Ask me about giving trends, Gift Aid, payroll, budgets, or ask me to draft a report." }
   ]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -51,8 +51,8 @@ export default function DemoAI() {
             <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
               <div style={{
                 maxWidth: "70%", padding: "0.85rem 1.1rem", borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                background: m.role === "user" ? "var(--forest)" : "var(--card-bg)",
-                color: m.role === "user" ? "#fff" : "var(--ink)",
+                background: m.role === "user" ? "var(--invert-surface)" : "var(--card-bg)",
+                color: m.role === "user" ? "var(--invert-ink)" : "var(--ink)",
                 fontSize: "0.93rem", lineHeight: 1.6,
                 boxShadow: "0 1px 4px rgba(0,0,0,0.08)"
               }}>{m.content}</div>
@@ -61,7 +61,7 @@ export default function DemoAI() {
           {thinking && (
             <div style={{ display: "flex", justifyContent: "flex-start" }}>
               <div style={{ padding: "0.85rem 1.1rem", borderRadius: "18px 18px 18px 4px", background: "var(--card-bg)", color: "var(--fg-muted)", fontSize: "0.9rem" }}>
-                ✨ Thinking...
+                Thinking…
               </div>
             </div>
           )}

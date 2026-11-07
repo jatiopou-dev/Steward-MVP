@@ -2,6 +2,15 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Data table. Density is correct here — a treasurer scanning 200 rows
+ * wants more rows, not more padding — so alignment does the work that
+ * decoration would otherwise do.
+ *
+ * Add `numeric` to a head or cell and it right-aligns and switches to
+ * tabular figures, so decimal points line up down the column and a
+ * wrong order of magnitude is visible at a glance.
+ */
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
@@ -9,7 +18,10 @@ const Table = React.forwardRef<
   <div className="relative w-full overflow-auto">
     <table
       ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
+      className={cn(
+        "w-full caption-bottom border-collapse text-[var(--t-md)]",
+        className
+      )}
       {...props}
     />
   </div>
@@ -43,7 +55,8 @@ const TableFooter = React.forwardRef<
   <tfoot
     ref={ref}
     className={cn(
-      "border-t bg-muted/50 font-medium [&>tr]:last:border-b-0",
+      "border-t border-[var(--line-strong)] bg-[var(--bg-sunken)] font-semibold",
+      "[&>tr]:last:border-b-0",
       className
     )}
     {...props}
@@ -58,7 +71,8 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+      "border-b border-[var(--line)] transition-colors duration-[160ms] ease-[var(--e-sharp)]",
+      "hover:bg-[var(--bg-sunken)] data-[state=selected]:bg-[var(--accent-soft)]",
       className
     )}
     {...props}
@@ -68,12 +82,17 @@ TableRow.displayName = "TableRow"
 
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+  React.ThHTMLAttributes<HTMLTableCellElement> & { numeric?: boolean }
+>(({ className, numeric, ...props }, ref) => (
   <th
     ref={ref}
+    scope="col"
     className={cn(
-      "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+      "sticky top-0 z-[var(--z-raised)] bg-[var(--surface)]",
+      "h-9 px-3 align-middle text-left",
+      "text-[var(--t-xs)] font-semibold tracking-[var(--tr-wide)] text-[var(--ink-3)]",
+      "[&:has([role=checkbox])]:pr-0",
+      numeric && "text-right",
       className
     )}
     {...props}
@@ -83,11 +102,17 @@ TableHead.displayName = "TableHead"
 
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
-  React.TdHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+  React.TdHTMLAttributes<HTMLTableCellElement> & { numeric?: boolean }
+>(({ className, numeric, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
+    className={cn(
+      "px-3 py-3 align-middle text-[var(--ink-2)]",
+      "[&:has([role=checkbox])]:pr-0",
+      numeric &&
+        "text-right font-[family-name:var(--font-mono-tabular)] [font-variant-numeric:tabular-nums] text-[var(--ink)]",
+      className
+    )}
     {...props}
   />
 ))
@@ -99,7 +124,7 @@ const TableCaption = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <caption
     ref={ref}
-    className={cn("mt-4 text-sm text-muted-foreground", className)}
+    className={cn("mt-3 text-[var(--t-sm)] text-[var(--ink-3)]", className)}
     {...props}
   />
 ))

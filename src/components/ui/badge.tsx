@@ -3,18 +3,35 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Status, never decoration. Each variant maps to one meaning in the
+ * finance vocabulary, so the same colour always says the same thing:
+ * positive is money in or a cleared state, warning is awaiting action,
+ * destructive is a failure or a shortfall.
+ */
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  [
+    "inline-flex items-center gap-1 rounded-[var(--r-pill)] border",
+    "px-2 py-[2px] text-[var(--t-xs)] font-[550]",
+    "tracking-[var(--tr-base)] whitespace-nowrap",
+    "transition-colors duration-[160ms] ease-[var(--e-sharp)]",
+  ].join(" "),
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+          "border-transparent bg-[var(--accent)] text-[var(--ink-on-accent)]",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "border-[var(--line)] bg-[var(--bg-sunken)] text-[var(--ink-3)]",
+        positive:
+          "border-[color-mix(in_oklch,var(--pos)_22%,transparent)] bg-[var(--pos-soft)] text-[var(--pos)]",
+        warning:
+          "border-[color-mix(in_oklch,var(--warn)_24%,transparent)] bg-[var(--warn-soft)] text-[var(--warn)]",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
+          "border-[color-mix(in_oklch,var(--neg)_22%,transparent)] bg-[var(--neg-soft)] text-[var(--neg)]",
+        seal:
+          "border-[color-mix(in_oklch,var(--seal)_26%,transparent)] bg-[var(--seal-soft)] text-[var(--seal)]",
+        outline: "border-[var(--line-strong)] text-[var(--ink-2)]",
       },
     },
     defaultVariants: {
@@ -24,12 +41,12 @@ const badgeVariants = cva(
 )
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends React.HTMLAttributes<HTMLSpanElement>,
     VariantProps<typeof badgeVariants> {}
 
 function Badge({ className, variant, ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <span className={cn(badgeVariants({ variant }), className)} {...props} />
   )
 }
 

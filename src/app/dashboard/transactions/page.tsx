@@ -1,6 +1,8 @@
 import React from "react";
 import Link from "next/link";
+import { Inbox, Plus } from "lucide-react";
 import Topbar from "@/components/dashboard/Topbar";
+import { categoryIcon } from "@/lib/category-icons";
 import { getTransactions, deleteTransaction } from "@/app/actions/transactions";
 
 function formatGBP(pence: number): string {
@@ -19,30 +21,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function categoryIcon(category: string | null, isIncome: boolean): string {
-  if (!category) return isIncome ? "🎁" : "💳";
-  const map: Record<string, string> = {
-    "Regular giving": "🎁",
-    "Tithe & offering": "🙏",
-    "Special offering": "✨",
-    "Fundraising": "🎪",
-    "Grant": "📋",
-    "Hall hire": "🏛",
-    "Wedding / funeral fees": "⛪",
-    "Other income": "💰",
-    "Payroll & wages": "💼",
-    "Building & facilities": "🏢",
-    "Ministry & outreach": "🌍",
-    "Administration": "📁",
-    "Worship & music": "🎵",
-    "Utilities": "⚡",
-    "Mission giving": "🌐",
-    "Insurance": "🛡",
-    "Community events": "🎉",
-    "Other expense": "📤",
-  };
-  return map[category] ?? (isIncome ? "🎁" : "💳");
-}
+
 
 export default async function TransactionsPage() {
   const transactions = await getTransactions();
@@ -105,17 +84,19 @@ export default async function TransactionsPage() {
           </div>
 
           {transactions.length === 0 ? (
-            <div style={{ padding: "3rem", textAlign: "center" }}>
-              <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📭</div>
-              <h3 style={{ fontFamily: "var(--font-serif)", color: "var(--forest)", marginBottom: ".5rem" }}>
-                No transactions yet
-              </h3>
-              <p style={{ fontSize: ".84rem", color: "var(--stone2)", marginBottom: "1.5rem" }}>
-                Add your first transaction or import a bank statement CSV.
+            <div className="empty">
+              <div className="empty-icon">
+                <Inbox size={18} strokeWidth={1.8} aria-hidden="true" />
+              </div>
+              <div className="empty-title">No transactions yet</div>
+              <p className="empty-body">
+                Add your first transaction, or import a bank statement CSV to
+                populate the ledger in one pass.
               </p>
-              <div style={{ display: "flex", gap: ".8rem", justifyContent: "center" }}>
+              <div className="empty-actions">
                 <Link href="/dashboard/transactions/new" className="btn btn-forest btn-sm">
-                  + Add transaction
+                  <Plus aria-hidden="true" />
+                  Add transaction
                 </Link>
                 <Link href="/dashboard/transactions/import" className="btn btn-outline btn-sm">
                   Import CSV
@@ -127,10 +108,10 @@ export default async function TransactionsPage() {
               {transactions.map((tx) => {
                 const isIncome = tx.amount_pence > 0;
                 return (
-                  <div className="tx" key={tx.id} style={{ borderBottom: "1px solid var(--parchment2)", paddingBottom: ".65rem" }}>
-                    <div className={`tx-ico ${isIncome ? "inc" : "exp"}`}>
-                      {categoryIcon(tx.category, isIncome)}
-                    </div>
+                  <div className="tx" key={tx.id}>
+                    <span className="avatar" aria-hidden="true">
+                      {React.createElement(categoryIcon(tx.category, isIncome), { size: 15, strokeWidth: 1.8 })}
+                    </span>
                     <div className="tx-body">
                       <div className="tx-name">{tx.description || "—"}</div>
                       <div className="tx-meta">
@@ -144,7 +125,7 @@ export default async function TransactionsPage() {
                         )}
                       </div>
                     </div>
-                    <div className={`tx-amt ${isIncome ? "inc" : "exp"}`}>
+                    <div className={`num tx-amt ${isIncome ? "num-pos" : "num-neg"}`}>
                       {isIncome ? "+" : "−"}{formatGBP(tx.amount_pence)}
                     </div>
                     <div style={{ display: "flex", gap: ".4rem", marginLeft: ".8rem" }}>
