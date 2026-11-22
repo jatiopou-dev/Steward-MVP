@@ -202,3 +202,45 @@ export const getAnchorSchema = z.object({
 
 export type ReanchorPeriodInput = z.infer<typeof reanchorPeriodSchema>;
 export type GetAnchorInput = z.infer<typeof getAnchorSchema>;
+
+// Bank matching schemas
+
+const confidence = z.number().min(0, 'Confidence must be 0–1').max(1, 'Confidence must be 0–1').optional();
+const reasons = z.array(z.string().max(100)).max(10).optional();
+
+export const getMatchSuggestionsSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  year: z.number().int().min(2000).max(2100),
+  month: z.number().int().min(1, 'Month must be 1–12').max(12, 'Month must be 1–12'),
+  bank_account_id: z.string().uuid('Invalid bank account ID').optional(),
+});
+
+export const acceptMatchSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  donation_id: z.string().uuid('Invalid donation ID'),
+  bank_line_ids: z
+    .array(z.string().uuid('Invalid bank line ID'))
+    .min(1, 'Choose one bank line, or two for a split')
+    .max(2, 'Choose one bank line, or two for a split')
+    .refine((ids) => new Set(ids).size === ids.length, 'Split lines must be different'),
+  confidence,
+  reasons,
+});
+
+export const rejectMatchSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  bank_line_id: z.string().uuid('Invalid bank line ID'),
+  donation_id: z.string().uuid('Invalid donation ID'),
+  confidence,
+  reasons,
+});
+
+export const undoMatchSchema = z.object({
+  organisation_id: z.string().uuid('Invalid organisation ID'),
+  decision_id: z.string().uuid('Invalid decision ID'),
+});
+
+export type GetMatchSuggestionsInput = z.infer<typeof getMatchSuggestionsSchema>;
+export type AcceptMatchInput = z.infer<typeof acceptMatchSchema>;
+export type RejectMatchInput = z.infer<typeof rejectMatchSchema>;
+export type UndoMatchInput = z.infer<typeof undoMatchSchema>;

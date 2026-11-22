@@ -248,3 +248,38 @@ export interface ChainAnchor {
   anchored_at: string;
   anchored_by: string | null;
 }
+
+// Bank matching types
+
+export type BankLineStatus = 'unmatched' | 'matched';
+export type MatchDecisionKind = 'accepted' | 'rejected';
+
+export interface BankLine {
+  id: string;
+  organisation_id: string;
+  bank_account_id: string;
+  source_reference: string;
+  transaction_date: string;
+  amount_pence: number;
+  currency: string;
+  reference: string | null;
+  counterparty_name: string | null;
+  raw_row: Record<string, unknown>;
+  status: BankLineStatus;
+  created_at: string;
+}
+
+export interface MatchDecision {
+  id: string;
+  organisation_id: string;
+  bank_line_id: string;
+  donation_id: string;
+  decision: MatchDecisionKind;
+  split_group_id: string | null;
+  confidence: number | null;
+  reasons: string[];
+  decided_by: string | null;
+  decided_at: string;
+  undone_by: string | null;
+  undone_at: string | null;
+}
