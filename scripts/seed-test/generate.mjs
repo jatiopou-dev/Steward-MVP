@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Generates fictional donations and bank lines for a TEST database only.
-// Output (default ./out): seed.sql, bank_lines.csv, expected_matches.csv,
-// expected_unmatched.csv. Same --seed => identical output.
+// Output (default ./out): seed.sql, bank_lines.csv, donations.csv,
+// expected_matches.csv, expected_unmatched.csv. Same --seed => identical output.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -338,6 +338,9 @@ writeFileSync(join(OUT_DIR, 'seed.sql'), sql.join('\n'));
 writeFileSync(join(OUT_DIR, 'bank_lines.csv'), csv(
   ['line_number', 'bank_line_id', 'date', 'description', 'counterparty', 'reference', 'amount'],
   allLines.map((l) => [l.line_number, l.id, l.transaction_date, l.description, l.counterparty_name, l.reference, (l.amount_pence / 100).toFixed(2)])));
+writeFileSync(join(OUT_DIR, 'donations.csv'), csv(
+  ['donation_id', 'reference', 'date', 'amount_pence', 'donor_name'],
+  donations.map((d) => [d.id, d.source_reference, d.transaction_date, d.amount_pence, d.donor?.display_name ?? null])));
 writeFileSync(join(OUT_DIR, 'expected_matches.csv'), csv(
   ['match_id', 'match_type', 'donation_id', 'donation_reference', 'donation_date', 'donation_amount_pence',
     'bank_line_id', 'bank_line_number', 'bank_date', 'bank_amount_pence', 'bank_reference', 'reference_quality', 'date_offset_days'],
