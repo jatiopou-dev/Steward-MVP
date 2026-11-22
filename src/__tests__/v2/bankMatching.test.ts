@@ -89,6 +89,31 @@ describe('matchBankLines', () => {
     expect(result.unmatched_bank_line_ids).toEqual(['b1', 'b2']);
   });
 
+  it('never uses a line whose reference points elsewhere, even when the donor name matches', () => {
+    const d = donation({ id: 'd1', source_reference: 'STW-01001', donor_name: 'Ruth Rookwood' });
+    const single = matchBankLines([line({ id: 'b1', reference: 'STW-09876', counterparty_name: 'R ROOKWOOD' })], [d]);
+    expect(single.matches).toEqual([]);
+    const split = matchBankLines(
+      [
+        line({ id: 'b1', amount_pence: 1200, reference: 'STW-01001 PT1', counterparty_name: 'R ROOKWOOD' }),
+        line({ id: 'b2', amount_pence: 800, reference: 'STW-09876', counterparty_name: 'R ROOKWOOD' }),
+      ],
+      [d]
+    );
+    expect(split.matches).toEqual([]);
+  });
+
+  it('prefers an exact reference over a fuzzy reference backed by the donor name', () => {
+    const result = matchBankLines(
+      [line({ id: 'b1', reference: 'STW-01001', counterparty_name: 'R ROOKWOOD' })],
+      [
+        donation({ id: 'd1', source_reference: 'STW-01001', donor_name: 'Ben Hollins' }),
+        donation({ id: 'd2', source_reference: 'STW-01007', donor_name: 'Ruth Rookwood' }),
+      ]
+    );
+    expect(result.matches).toMatchObject([{ donation_id: 'd1', evidence: ['reference_exact'] }]);
+  });
+
   it('accepts amount and date alone only when the pairing is unambiguous', () => {
     const lone = matchBankLines([line({ id: 'b1' })], [donation({ id: 'd1', source_reference: 'STW-01001' })]);
     expect(lone.matches).toMatchObject([{ donation_id: 'd1', evidence: ['amount_date_only'] }]);
