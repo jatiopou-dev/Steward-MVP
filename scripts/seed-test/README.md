@@ -57,4 +57,13 @@ Files written to `scripts/seed-test/out/` (git-ignored):
 | Donations with no bank line | 20 |
 | Bank lines that must not match (fees, interest, savings transfer, same donor and amount but 9 or more days away) | 6 |
 
+## Evaluate the matching engine
+
+```bash
+npm run eval:matching                   # default seed
+SEED_TEST_SEED=42 npm run eval:matching # another repeatable dataset
+```
+
+Generates the seed into a temporary directory (no database needed), runs `rankCandidates` from `src/lib/reconciliation/candidates.ts`, and prints top-1 and top-3 accuracy over the 194 bank lines that have a known donation, every miss with its top three candidates, and any candidates given to the 6 decoy lines.
+
 To generate only the files, without a database: `node scripts/seed-test/generate.mjs --out=/tmp/seed`.
