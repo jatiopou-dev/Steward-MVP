@@ -51,6 +51,7 @@ export interface MatchOptions {
 const DAY_MS = 86_400_000;
 const LOOKALIKES: Record<string, string> = { O: '0', I: '1', L: '1', S: '5', B: '8' };
 const PART_MARKER = /\s*\b(PT|PART)\s*\d+\s*$/i;
+const CORRUPT_PART_TAIL = /^(?=.*[PT])[PT\d]{1,4}$/;
 const AMOUNT_ONLY_CONFIDENCE = 0.3;
 const SPLIT_PENALTY = 0.05;
 
@@ -90,9 +91,11 @@ export function referenceScore(bankRef: string | null, donationRef: string): num
   if (!target) return 0;
   const full = normalizeReference(bankRef);
   let best = Math.min(levenshtein(full, target), levenshtein(normalizeReference(bankRef.replace(PART_MARKER, '')), target));
-  // A corrupted part marker may survive stripping; compare the leading characters, at one edit's cost.
+  // A corrupted part marker (`TP1`, `P1`, `PTT1`) may survive stripping; compare the leading
+  // characters at one edit's cost, but only when the leftover tail still looks like a part marker.
   if (target.length >= 6 && full.length > target.length && full.length - target.length <= 4) {
     for (const len of [target.length - 1, target.length, target.length + 1]) {
+      if (!CORRUPT_PART_TAIL.test(full.slice(len))) continue;
       best = Math.min(best, levenshtein(full.slice(0, len), target) + 1);
     }
   }

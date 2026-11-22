@@ -43,6 +43,11 @@ describe('referenceScore', () => {
     expect(referenceScore('GROSS INTEREST', 'STW-01001')).toBe(0);
     expect(referenceScore(null, 'STW-01001')).toBeNull();
   });
+
+  it('tolerates a corrupted part marker but not unrelated extra characters', () => {
+    expect(referenceScore('STW-01001 TP1', 'STW-01001')).toBe(0.8);
+    expect(referenceScore('INV1234567890', 'INV123456')).toBe(0);
+  });
 });
 
 describe('nameScore', () => {
