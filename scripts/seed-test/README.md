@@ -44,6 +44,8 @@ Files written to `scripts/seed-test/out/` (git-ignored):
 - `donations.csv`: the donations as a CSV, used by the matching-engine test (`src/__tests__/v2/bankMatching.test.ts`).
 - `seed.sql`: the generated SQL.
 
+After the seed is verified, `run.sh` also runs `sql/matching_checks.sql`. It copies the seeded bank lines into the real `bank_lines` table (migration 020) and checks the match-decision rules: accept, split accept, undo, reject, amount and date limits, and closed periods. It runs inside a transaction that is rolled back, so the seed is left as it was.
+
 ## Messy cases
 
 | Case | Count |

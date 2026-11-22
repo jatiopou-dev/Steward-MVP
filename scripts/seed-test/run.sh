@@ -104,5 +104,8 @@ $RUN_PSQL < "$OUT_DIR/seed.sql"
 echo "==> Verifying against expected matches"
 $RUN_PSQL < "$HERE/sql/verify.sql"
 
+echo "==> Checking match-decision rules"
+$RUN_PSQL < "$HERE/sql/matching_checks.sql"
+
 echo "==> Done. Answer key: $OUT_DIR/expected_matches.csv"
 [[ "$MODE" == --existing ]] || echo "    Connect: postgresql://postgres:postgres@127.0.0.1:$PORT/postgres  (remove with ./run.sh --down)"
