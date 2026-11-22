@@ -41,6 +41,7 @@ Files written to `scripts/seed-test/out/` (git-ignored):
 - `expected_matches.csv`: the known correct matches.
 - `expected_unmatched.csv`: donations with no bank line, and bank lines that should not match.
 - `bank_lines.csv`: the bank lines as a CSV statement.
+- `donations.csv`: the donations as a CSV, used by the matching-engine test (`src/__tests__/v2/bankMatching.test.ts`).
 - `seed.sql`: the generated SQL.
 
 ## Messy cases
