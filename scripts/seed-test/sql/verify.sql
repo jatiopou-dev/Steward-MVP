@@ -11,6 +11,14 @@ BEGIN
   SELECT count(*) INTO n FROM seed_test.bank_lines WHERE organisation_id = org;
   IF n <> 200 THEN RAISE EXCEPTION 'expected 200 bank lines, found %', n; END IF;
 
+  -- The answer key must be complete: 166 one-to-one + 14 split donations over 194 bank lines.
+  SELECT count(*) INTO n FROM seed_test.expected_matches;
+  IF n <> 194 THEN RAISE EXCEPTION 'expected 194 answer-key rows, found %', n; END IF;
+  SELECT count(DISTINCT donation_id) INTO n FROM seed_test.expected_matches WHERE match_type = 'one_to_one';
+  IF n <> 166 THEN RAISE EXCEPTION 'expected 166 one-to-one donations in the answer key, found %', n; END IF;
+  SELECT count(DISTINCT donation_id) INTO n FROM seed_test.expected_matches WHERE match_type = 'split';
+  IF n <> 14 THEN RAISE EXCEPTION 'expected 14 split donations in the answer key, found %', n; END IF;
+
   -- Every matched donation's bank lines must sum to the donation amount.
   SELECT count(*) INTO n FROM (
     SELECT d.id FROM donations d
