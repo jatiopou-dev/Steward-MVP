@@ -54,7 +54,9 @@ guard_url() {
   fi
   [[ "$url" =~ supabase\.(co|com) ]] && die "refusing: hosted Supabase URLs are not allowed; use a local test database"
   host="$(sed -E 's#^[a-z]+://([^@/]*@)?(\[[^]]*\]|[^:/?,]*).*#\2#' <<<"$url")"
-  [[ "$(sed -E 's#^[a-z]+://([^/?]*).*#\1#' <<<"$url")" == *,* ]] && die "refusing: multi-host URLs are not allowed"
+  local authority
+  authority="$(sed -E 's#^[a-z]+://([^/?]*).*#\1#' <<<"$url")"
+  [[ "${authority#*@}" == *,* ]] && die "refusing: multi-host URLs are not allowed"
   case "$host" in
     localhost|127.0.0.1|"[::1]"|host.docker.internal) ;;
     *) die "refusing: host '$host' is not local (allowed: localhost, 127.0.0.1, [::1], host.docker.internal)" ;;
