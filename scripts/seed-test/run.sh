@@ -27,7 +27,8 @@ container_psql() { docker exec -i "$CONTAINER" psql -q -v ON_ERROR_STOP=1 -U pos
 
 url_psql() {
   if command -v psql >/dev/null; then
-    psql -q -v ON_ERROR_STOP=1 "$SEED_TEST_DATABASE_URL" "$@"
+    env -u PGHOST -u PGHOSTADDR -u PGSERVICE -u PGSERVICEFILE \
+      psql -q -v ON_ERROR_STOP=1 "$SEED_TEST_DATABASE_URL" "$@"
   else
     docker run --rm -i --network host "$PG_IMAGE" psql -q -v ON_ERROR_STOP=1 "$SEED_TEST_DATABASE_URL" "$@"
   fi
@@ -39,8 +40,21 @@ guard_url() {
   if [[ -n "$linked_ref" && "$url" == *"$linked_ref"* ]]; then
     die "refusing: URL points at the linked Supabase project ($linked_ref)"
   fi
+  [[ "$url" =~ ^postgres(ql)?:// ]] || die "refusing: SEED_TEST_DATABASE_URL must be a postgres:// or postgresql:// URL"
+  # Query parameters such as host= or hostaddr= can redirect libpq elsewhere; allow only harmless ones.
+  if [[ "$url" == *\?* ]]; then
+    local param
+    IFS='&' read -ra params <<<"${url#*\?}"
+    for param in "${params[@]}"; do
+      case "${param%%=*}" in
+        sslmode|connect_timeout|application_name) ;;
+        *) die "refusing: query parameter '${param%%=*}' is not allowed" ;;
+      esac
+    done
+  fi
   [[ "$url" =~ supabase\.(co|com) ]] && die "refusing: hosted Supabase URLs are not allowed; use a local test database"
-  host="$(sed -E 's#^[a-z]+://([^@/]*@)?(\[[^]]*\]|[^:/?]*).*#\2#' <<<"$url")"
+  host="$(sed -E 's#^[a-z]+://([^@/]*@)?(\[[^]]*\]|[^:/?,]*).*#\2#' <<<"$url")"
+  [[ "$(sed -E 's#^[a-z]+://([^/?]*).*#\1#' <<<"$url")" == *,* ]] && die "refusing: multi-host URLs are not allowed"
   case "$host" in
     localhost|127.0.0.1|"[::1]"|host.docker.internal) ;;
     *) die "refusing: host '$host' is not local (allowed: localhost, 127.0.0.1, [::1], host.docker.internal)" ;;
