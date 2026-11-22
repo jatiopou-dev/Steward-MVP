@@ -135,9 +135,9 @@ function lineEvidence(line: MatchBankLine, donation: MatchDonation, maxGap: numb
   return { ref, name, gap, score };
 }
 
-/** A reference that points elsewhere, with no name to vouch for the line. */
-const contradicts = (e: LineEvidence) => e.ref === 0 && e.name === 0;
-const supports = (e: LineEvidence) => (e.ref ?? 0) > 0 || e.name > 0;
+/** A reference that points elsewhere; a matching donor name does not outweigh it. */
+const contradicts = (e: LineEvidence) => e.ref === 0;
+const supports = (e: LineEvidence) => !contradicts(e) && ((e.ref ?? 0) > 0 || e.name > 0);
 
 function evidenceOf(list: LineEvidence[]): MatchEvidence[] {
   const out = new Set<MatchEvidence>();
@@ -156,7 +156,11 @@ interface Candidate {
   score: number;
 }
 
+/** The strongest reference evidence on any line; ranks ahead of score so an exact reference beats a fuzzy one plus a name. */
+const refStrength = (c: Candidate) => Math.max(...c.evidence.map((e) => e.ref ?? 0));
+
 const byScore = (a: Candidate, b: Candidate) =>
+  refStrength(b) - refStrength(a) ||
   b.score - a.score ||
   a.evidence.reduce((s, e) => s + Math.abs(e.gap), 0) - b.evidence.reduce((s, e) => s + Math.abs(e.gap), 0) ||
   a.donation.id.localeCompare(b.donation.id) ||
